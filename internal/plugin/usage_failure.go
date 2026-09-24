@@ -54,6 +54,8 @@ func inferredFailureType(body string) string {
 		return "websocket_abnormal_closure"
 	case strings.Contains(body, "context canceled"):
 		return "context_canceled"
+	case strings.Contains(body, "rate limit exceeded"):
+		return "rate_limit_exceeded"
 	default:
 		return ""
 	}

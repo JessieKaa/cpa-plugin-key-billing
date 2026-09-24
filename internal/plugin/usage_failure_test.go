@@ -32,6 +32,9 @@ func TestUsageFailureDetails(t *testing.T) {
 		name: "json-encoded body is unwrapped", body: `"Post \"https://api.deepseek.com/anthropic/v1/messages?beta=true\": context canceled"`,
 		want: billing.RequestError{ErrorType: "context_canceled", Body: canceled},
 	}, {
+		name: "bare detail payload is classified from its text", statusCode: 429, body: `{"detail":"Rate limit exceeded"}`,
+		want: billing.RequestError{StatusCode: 429, ErrorType: "rate_limit_exceeded", Body: `{"detail":"Rate limit exceeded"}`},
+	}, {
 		name: "unknown signature stays unclassified", statusCode: 308, body: "redirect failed",
 		want: billing.RequestError{StatusCode: 308, Body: "redirect failed"},
 	}} {
