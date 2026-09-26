@@ -52,6 +52,12 @@ flowchart TB
 
 ## 安装
 
+### 商店安装
+
+CPA 管理面板（CPAMC 或 CPAMP）插件商店搜索 `cpa-key-billing`。
+
+### 人工安装
+
 在 CLIProxyAPI 根目录运行。macOS 和 Linux 使用：
 
 ```sh
@@ -65,16 +71,6 @@ irm https://raw.githubusercontent.com/haowang02/cpa-plugin-key-billing/main/inst
 ```
 
 安装脚本会将插件安装到当前目录的 `plugins/`。安装或升级完成后需要重启 CLIProxyAPI。
-
-也可以从 [Releases](../../releases/latest) 下载对应平台的发布包，解压后将动态库放入 CLIProxyAPI 的 `plugins/` 目录：
-
-```text
-plugins/cpa-key-billing.so       # Linux
-plugins/cpa-key-billing.dylib    # macOS
-plugins/cpa-key-billing.dll      # Windows
-```
-
-## 配置
 
 在 CLIProxyAPI 配置文件中加入：
 
