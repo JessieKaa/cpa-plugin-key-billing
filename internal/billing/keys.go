@@ -7,11 +7,12 @@ import (
 )
 
 type KeyView struct {
-	Scope     string    `json:"scope"`
-	Preview   string    `json:"preview,omitempty"`
-	Label     string    `json:"label,omitempty"`
-	InConfig  bool      `json:"in_config"`
-	DeletedAt time.Time `json:"deleted_at,omitzero"`
+	Scope     string           `json:"scope"`
+	Preview   string           `json:"preview,omitempty"`
+	Label     string           `json:"label,omitempty"`
+	InConfig  bool             `json:"in_config"`
+	DeletedAt time.Time        `json:"deleted_at,omitzero"`
+	Status    ManagementStatus `json:"status"`
 
 	PlanID             string        `json:"plan_id,omitempty"`
 	PlanName           string        `json:"plan_name,omitempty"`
@@ -52,6 +53,7 @@ func keyView(scope string, key *KeyState, plan Plan, currentConcurrency int, now
 		Label:              key.Label,
 		InConfig:           key.InConfig,
 		DeletedAt:          key.DeletedAt,
+		Status:             keyManagementStatus(key),
 		PlanID:             key.PlanID,
 		PlanName:           plan.Name,
 		QuotaView:          quotaView(key, plan, now),

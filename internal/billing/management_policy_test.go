@@ -3,6 +3,7 @@ package billing
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func syncPolicyKeys(t *testing.T, store *Store, keys ...string) {
@@ -92,6 +93,28 @@ func TestManagementPolicyStates(t *testing.T) {
 			t.Fatalf("external principal policy = %+v, want managed without error", policy)
 		}
 	})
+}
+
+// The administrator-facing status enum: deleted > external-managed > managed
+// > unmanaged, following the binding and configuration state.
+func TestKeyManagementStatus(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		key  KeyState
+		want ManagementStatus
+	}{
+		{name: "unmanaged configured key", key: KeyState{InConfig: true}, want: ManagementStatusUnmanaged},
+		{name: "managed configured key", key: KeyState{InConfig: true, PlanID: "p"}, want: ManagementStatusManaged},
+		{name: "external managed principal", key: KeyState{PlanID: "p"}, want: ManagementStatusExternalManaged},
+		{name: "deleted bound key", key: KeyState{InConfig: true, PlanID: "p", DeletedAt: time.Unix(1, 0)}, want: ManagementStatusDeleted},
+		{name: "deleted unbound key", key: KeyState{DeletedAt: time.Unix(1, 0)}, want: ManagementStatusDeleted},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := keyManagementStatus(&test.key); got != test.want {
+				t.Fatalf("status = %q, want %q", got, test.want)
+			}
+		})
+	}
 }
 
 // An in-memory dangling plan reference stays managed and fails loudly; it never

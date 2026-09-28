@@ -2,6 +2,35 @@ package billing
 
 import "fmt"
 
+// ManagementStatus is the administrator-facing state of a key. Precedence:
+// deleted, then managed outside CPA's configured key list (external), then
+// managed, then unmanaged. An unmanaged key bypasses plugin enforcement and
+// accounting entirely.
+type ManagementStatus string
+
+const (
+	ManagementStatusDeleted         ManagementStatus = "deleted"
+	ManagementStatusExternalManaged ManagementStatus = "external-managed"
+	ManagementStatusManaged         ManagementStatus = "managed"
+	ManagementStatusUnmanaged       ManagementStatus = "unmanaged"
+)
+
+func keyManagementStatus(key *KeyState) ManagementStatus {
+	switch {
+	case key == nil || key.PlanID == "":
+		if key != nil && !key.DeletedAt.IsZero() {
+			return ManagementStatusDeleted
+		}
+		return ManagementStatusUnmanaged
+	case !key.DeletedAt.IsZero():
+		return ManagementStatusDeleted
+	case !key.InConfig:
+		return ManagementStatusExternalManaged
+	default:
+		return ManagementStatusManaged
+	}
+}
+
 // ManagementPolicy reports whether one caller scope currently participates in
 // plugin enforcement and accounting. Plan binding is the opt-in marker: a key
 // without a bound subscription plan is unmanaged and bypasses the plugin
