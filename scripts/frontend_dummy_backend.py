@@ -16,230 +16,8 @@ from urllib.parse import parse_qs, urlparse
 ROOT = Path(__file__).resolve().parents[1]
 UI_PATH = ROOT / "internal" / "plugin" / "ui.html"
 API_BASE = "/v0/management/plugins/cpa-key-billing"
-RESOURCE_BASE = "/v0/resource/plugins/cpa-key-billing"
 NOW = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 CALLER_SCOPE_SALT = b"cli-proxy-api:caller-scope:v1\0"
-
-
-HOST_SHELL = r"""<!doctype html>
-<html lang="en" data-host="__HOST_MODE__">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>__HOST_LABEL__ · API Key 计费样式预览</title>
-<style>
-:root{
-  --bg-secondary:#faf9f5;--bg-primary:#f0eee8;--bg-tertiary:#e9e6df;--bg-hover:var(--bg-tertiary);
-  --text-primary:#2d2a26;--text-secondary:#6d6760;--text-tertiary:#a29c95;
-  --border-color:#e3e1db;--border-primary:#d5d2cb;--border-hover:#cecac4;
-  --primary-color:#8b8680;--primary-hover:#7f7a74;--primary-active:#726d67;--primary-contrast:#fff;
-  --success-badge-bg:#d1fae5;--success-badge-text:#065f46;--success-badge-border:#6ee7b7;
-  --failure-badge-bg:#c6574624;--failure-badge-text:#8a3a30;--failure-badge-border:#c6574659;
-  color-scheme:light;
-}
-:root[data-theme=white]{
-  --bg-secondary:#fff;--bg-primary:#fff;--bg-tertiary:#f6f6f6;
-  --border-color:#e5e5e5;--border-primary:#d9d9d9;--border-hover:#ccc;
-}
-:root[data-theme=dark]{
-  --bg-secondary:#151412;--bg-primary:#1d1b18;--bg-tertiary:#262320;--bg-hover:#2e2a26;
-  --text-primary:#f6f4f1;--text-secondary:#c9c3bb;--text-tertiary:#9c958d;
-  --border-color:#3a3530;--border-primary:#4a453f;--border-hover:#5a544d;
-  --primary-hover:#9a948e;--primary-active:#a6a099;
-  --success-badge-bg:#064e3b4d;--success-badge-text:#6ee7b7;--success-badge-border:#059669;
-  --failure-badge-bg:#c657463d;--failure-badge-text:#f1b0a6;--failure-badge-border:#c6574680;
-  color-scheme:dark;
-}
-html[data-host=cpamp]{
-  --app-bg:#eff2f7;--app-bg-gradient:linear-gradient(120deg,#f0f7ff 0%,#e7f2ff 50%,#edf7ff 100%);
-  --app-surface:rgba(255,255,255,.94);--app-surface-strong:#fff;--app-surface-muted:rgba(255,255,255,.68);
-  --app-border:rgba(15,23,42,.08);--app-border-strong:rgba(15,23,42,.12);
-  --app-text-primary:#2c3e50;--app-text-regular:#5f6c7b;--app-text-muted:#8b95a6;
-  --app-accent-soft:rgba(59,130,246,.12);--surface-subtle:#f6faff;
-  --app-radius-lg:20px;--app-radius-md:12px;--app-radius-sm:8px;
-  --glass-bg:#fff;--glass-border:rgba(255,255,255,.6);--glass-shadow:none;
-  --app-input-bg:rgba(255,255,255,.62);--app-input-bg-focus:#fff;
-  --app-input-border:var(--app-border-strong);--app-input-border-focus:#3b82f6;
-  --color-primary:#3b82f6;--color-primary-light-3:#60a5fa;--color-primary-dark-2:#2563eb;
-  --color-success:#22c55e;--success-color:var(--color-success);
-  --primary-color:var(--color-primary);--primary-hover:var(--color-primary-light-3);
-  --primary-active:var(--color-primary-dark-2);--primary-solid:#2563eb;--primary-solid-hover:#3b82f6;
-  --primary-ring:rgba(59,130,246,.22);--primary-contrast:#fff;
-  --color-warning:#f59e0b;--color-danger:#ef4444;
-  --data-blue-base:#3b82f6;--data-green-base:#22c55e;--data-amber-base:#f59e0b;
-  --data-red-base:#ef4444;--data-violet-base:#8b5cf6;--data-cyan-base:#06b6d4;
-  --data-badge-success-bg:#f0fdf4;--data-badge-success-text:#16a34a;--data-badge-success-border:#bbf7d0;
-  --data-badge-warning-bg:#fffbeb;--data-badge-warning-text:#d97706;--data-badge-warning-border:#fde68a;
-  --data-badge-danger-bg:#fef2f2;--data-badge-danger-text:#dc2626;--data-badge-danger-border:#fecaca;
-  --data-badge-info-bg:#eff6ff;--data-badge-info-text:#2563eb;--data-badge-info-border:#bfdbfe;
-  --data-badge-neutral-bg:#f8fafc;--data-badge-neutral-text:#475569;--data-badge-neutral-border:#cbd5e1;
-  --bg-secondary:var(--app-bg);--bg-primary:var(--app-surface);--bg-tertiary:var(--app-surface-muted);
-  --bg-hover:var(--app-accent-soft);--text-primary:var(--app-text-primary);
-  --text-secondary:var(--app-text-regular);--text-tertiary:var(--app-text-muted);
-  --border-color:var(--app-border);--border-primary:var(--app-border-strong);
-  --border-hover:rgba(59,130,246,.28);
-}
-html[data-host=cpamp][data-theme=dark]{
-  --app-bg:#0a0a0a;--app-bg-gradient:linear-gradient(120deg,#0b1324 0%,#0a1426 50%,#091521 100%);
-  --app-surface:rgba(24,28,40,.9);--app-surface-strong:#1b1f2a;--app-surface-muted:rgba(255,255,255,.08);
-  --app-border:rgba(255,255,255,.08);--app-border-strong:rgba(255,255,255,.12);
-  --app-text-primary:#e5e5e5;--app-text-regular:#a3a3a3;--app-text-muted:#7a7a7a;
-  --app-accent-soft:rgba(96,165,250,.18);--surface-subtle:rgba(255,255,255,.06);
-  --glass-bg:rgba(24,28,40,.72);--glass-border:rgba(255,255,255,.1);
-  --app-input-bg:#1b1f2a;--app-input-bg-focus:#1b1f2a;--app-input-border-focus:#60a5fa;
-  --color-primary:#60a5fa;--color-primary-light-3:#93c5fd;--color-primary-dark-2:#3b82f6;
-  --color-success:#4ade80;--success-color:var(--color-success);
-  --primary-solid:#60a5fa;--primary-solid-hover:#3b82f6;--primary-ring:rgba(96,165,250,.22);
-  --data-blue-base:#60a5fa;--data-green-base:#4ade80;--data-amber-base:#fbbf24;
-  --data-red-base:#f87171;--data-violet-base:#a78bfa;--data-cyan-base:#22d3ee;
-  --data-badge-success-bg:rgba(74,222,128,.14);--data-badge-success-text:#4ade80;--data-badge-success-border:rgba(74,222,128,.24);
-  --data-badge-warning-bg:rgba(251,191,36,.14);--data-badge-warning-text:#fbbf24;--data-badge-warning-border:rgba(251,191,36,.24);
-  --data-badge-danger-bg:rgba(248,113,113,.14);--data-badge-danger-text:#f87171;--data-badge-danger-border:rgba(248,113,113,.24);
-  --data-badge-info-bg:rgba(96,165,250,.14);--data-badge-info-text:#60a5fa;--data-badge-info-border:rgba(96,165,250,.24);
-  --data-badge-neutral-bg:rgba(148,163,184,.12);--data-badge-neutral-text:#94a3b8;--data-badge-neutral-border:rgba(148,163,184,.2);
-}
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden}
-body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg-secondary);color:var(--text-primary)}
-html[data-host=cpamp] body{background-color:var(--app-bg);background-image:var(--app-bg-gradient)}
-.sidebar{position:fixed;inset:0 auto 0 0;z-index:20;width:var(--sidebar-width);padding:14px 10px;
-  background:var(--bg-primary);border-right:1px solid var(--border-color)}
-.brand{display:flex;align-items:center;gap:10px;height:48px;padding:0 10px;font-size:17px;font-weight:750}
-.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--primary-color);color:#fff}
-.nav-placeholder{display:grid;gap:8px;margin-top:30px}
-.nav-placeholder span{height:38px;padding:9px 12px;border-radius:9px;color:var(--text-secondary)}
-.nav-placeholder span.active{background:var(--bg-tertiary);color:var(--text-primary);font-weight:650}
-.navbar{position:fixed;z-index:30;display:flex;align-items:center;justify-content:space-between;height:var(--header-height);
-  color:var(--text-secondary)}
-.navbar-left{display:flex;align-items:center;gap:10px;min-width:0}
-.mobile-menu,.theme-controls button{appearance:none;display:grid;place-items:center;width:36px;height:36px;padding:0;
-  border:1px solid transparent;border-radius:10px;background:transparent;color:inherit;font:inherit;cursor:pointer}
-.theme-controls{display:flex;gap:3px;padding:5px;border:1px solid var(--border-color);border-radius:14px;background:var(--bg-primary)}
-.theme-controls button:hover,.theme-controls button.active{background:var(--bg-tertiary);color:var(--text-primary)}
-.content{position:fixed;overflow:hidden}
-#plugin-frame{display:block;width:100%;height:100%;border:0;background:var(--bg-secondary)}
-html[data-host=cpamc]{--sidebar-width:216px;--header-height:80px}
-html[data-host=cpamc] .navbar{inset:0 0 auto var(--sidebar-width);pointer-events:none}
-html[data-host=cpamc] .navbar-left{display:none}
-html[data-host=cpamc] .navbar-left>span{display:none}
-html[data-host=cpamc] .theme-controls{position:absolute;top:24px;right:24px;pointer-events:auto;box-shadow:0 18px 44px #0000002b}
-html[data-host=cpamc] .mobile-menu{display:none}
-html[data-host=cpamc] .content{inset:0 0 0 var(--sidebar-width)}
-html[data-host=cpamp]{--sidebar-width:210px;--header-height:50px}
-html[data-host=cpamp] .sidebar{background:color-mix(in srgb,var(--app-surface) 70%,transparent)}
-html[data-host=cpamp] .navbar{inset:0 0 auto var(--sidebar-width);padding:0 20px 0 8px;background:var(--app-surface);border-bottom:1px solid var(--app-border)}
-html[data-host=cpamp] .theme-controls{padding:2px;border:0;background:transparent}
-html[data-host=cpamp] .theme-white{display:none}
-html[data-host=cpamp] .content{inset:var(--header-height) 0 0 var(--sidebar-width)}
-html[data-host=cpamp] #plugin-frame{background:var(--bg-primary)}
-@media(max-width:768px){
-  .sidebar{display:none}
-  html[data-host] .navbar{left:0}
-  html[data-host] .content{left:0}
-  html[data-host=cpamc] .navbar-left{display:block;position:absolute;top:12px;left:12px;pointer-events:auto}
-  html[data-host=cpamc] .mobile-menu{display:grid;background:var(--bg-primary);border-color:var(--border-color);box-shadow:0 18px 44px #0000002b}
-  html[data-host=cpamc] .theme-controls{top:12px;right:12px}
-  html[data-host=cpamp] .navbar{padding-right:8px}
-}
-</style>
-</head>
-<body>
-<aside class="sidebar">
-  <div class="brand"><span class="brand-mark">◈</span><span>__HOST_LABEL__</span></div>
-  <div class="nav-placeholder"><span>仪表盘</span><span>AI 提供商</span><span>插件管理</span><span class="active">API Key 计费</span></div>
-</aside>
-<header class="navbar">
-  <div class="navbar-left"><button class="mobile-menu" title="菜单">☰</button><span>API Key 计费</span></div>
-  <div class="theme-controls" aria-label="预览主题">
-    <select id="host-language" aria-label="Language"><option value="en">English</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="ru">Русский</option></select>
-    <button type="button" data-action="refresh" title="刷新">↻</button>
-    <button type="button" data-theme-choice="light" title="浅色主题">◐</button>
-    <button type="button" class="theme-white" data-theme-choice="white" title="白色主题">○</button>
-    <button type="button" data-theme-choice="dark" title="深色主题">●</button>
-  </div>
-</header>
-<main class="content"><iframe id="plugin-frame" src="/ui" title="API Key 计费插件"></iframe></main>
-<script>
-"use strict";
-const HOST_MODE="__HOST_MODE__";
-const INITIAL_THEME="__INITIAL_THEME__";
-const root=document.documentElement;
-const frame=document.getElementById("plugin-frame");
-const language=document.getElementById("host-language");
-language.value=root.lang;
-language.onchange=()=>{root.lang=language.value;};
-const systemDark=()=>!!matchMedia("(prefers-color-scheme:dark)").matches;
-let selectedTheme=INITIAL_THEME;
-
-function resolveTheme(choice){
-  if(choice==="auto")return systemDark()?"dark":"white";
-  if(HOST_MODE==="cpamp"&&choice==="light")return "white";
-  return choice;
-}
-
-function cpampBridgeCSS(theme){
-  const computed=getComputedStyle(root);
-  const declarations=[];
-  for(let index=0;index<computed.length;index++){
-    const name=computed.item(index);
-    if(!name.startsWith("--"))continue;
-    const value=computed.getPropertyValue(name).trim();
-    if(value)declarations.push("  "+name+":"+value+";");
-  }
-  const scope=":where(html[data-cpamp-plugin-host='true'])";
-  return scope+"{\n"+declarations.join("\n")+"\ncolor-scheme:"+(theme==="dark"?"dark":"light")+";min-height:100%;background:var(--bg-primary);color:var(--text-primary)}\n"+
-    scope+" :where(body){min-height:100vh;margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5}\n"+
-    scope+" :where(body,button,input,select,textarea){font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}\n"+
-    scope+" :where(input:not([type=checkbox]):not([type=radio]),select,textarea){min-height:34px;border:1px solid var(--app-input-border);border-radius:var(--app-radius-sm);background:var(--app-input-bg);color:var(--text-primary);box-shadow:none}\n"+
-    scope+" :where(button,[role=button]){min-height:34px;border:1px solid var(--border-color);border-radius:var(--app-radius-md);background:var(--app-surface-muted);color:var(--text-primary);font-weight:600;line-height:1.2}\n"+
-    scope+" :where(thead,th){background:color-mix(in srgb,var(--bg-tertiary) 72%,var(--bg-primary));color:var(--text-secondary)}\n"+
-    scope+" :where(.card,[class*=card],[class*=panel]){border-color:var(--border-color);background:var(--bg-primary);color:var(--text-primary)}";
-}
-
-function syncCPAMPFrame(theme){
-  if(HOST_MODE!=="cpamp")return;
-  let doc;
-  try{doc=frame.contentDocument}catch(_){return}
-  if(!doc||!doc.documentElement||!doc.head)return;
-  const childRoot=doc.documentElement;
-  childRoot.setAttribute("data-cpamp-plugin-host","true");
-  childRoot.setAttribute("data-theme",theme==="dark"?"dark":"white");
-  childRoot.classList.toggle("theme-dark",theme==="dark");
-  childRoot.classList.toggle("theme-light",theme!=="dark");
-  let style=doc.getElementById("cpamp-dummy-host-style");
-  if(!style){
-    style=doc.createElement("style");
-    style.id="cpamp-dummy-host-style";
-    const pluginStyle=doc.head.querySelector("style,link[rel~=stylesheet]");
-    doc.head.insertBefore(style,pluginStyle);
-  }
-  style.textContent=cpampBridgeCSS(theme);
-}
-
-function applyTheme(choice){
-  selectedTheme=choice;
-  const theme=resolveTheme(choice);
-  const activeChoice=choice==="auto"?(HOST_MODE==="cpamp"&&theme==="white"?"light":theme):choice;
-  if(theme==="light")root.removeAttribute("data-theme");else root.setAttribute("data-theme",theme);
-  document.querySelectorAll("[data-theme-choice]").forEach(button=>{
-    button.classList.toggle("active",button.dataset.themeChoice===activeChoice);
-  });
-  syncCPAMPFrame(theme);
-}
-
-document.querySelectorAll("[data-theme-choice]").forEach(button=>{
-  button.addEventListener("click",()=>applyTheme(button.dataset.themeChoice));
-});
-document.querySelector("[data-action=refresh]").addEventListener("click",()=>frame.contentWindow.location.reload());
-frame.addEventListener("load",()=>applyTheme(selectedTheme));
-matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{
-  if(selectedTheme==="auto")applyTheme("auto");
-});
-applyTheme(INITIAL_THEME);
-</script>
-</body>
-</html>
-"""
 
 
 def iso(value):
@@ -602,12 +380,20 @@ def make_key(index):
 
 
 KEYS = [make_key(index) for index in range(1, len(KEY_PROFILES) + 1)]
+KEYS[5]["deleted_at"] = iso(NOW - timedelta(days=3))
 KEYS[-2]["in_config"] = False
-KEYS[-2]["deleted_at"] = iso(NOW - timedelta(days=2))
 KEYS[-1]["in_config"] = False
-KEYS[-1]["deleted_at"] = iso(NOW - timedelta(days=1))
-KEYS[-1]["route_bindings"]["route_ids"] = ["economy"]
 LIVE_KEYS = [key for key in KEYS if not key.get("deleted_at")]
+
+
+def key_status(key):
+    if key.get("deleted_at"):
+        return "deleted"
+    if not key.get("plan_id"):
+        return "unmanaged"
+    if not key.get("in_config"):
+        return "external-managed"
+    return "managed"
 
 PRICES = [
     {
@@ -866,42 +652,6 @@ def filter_event_time(entries, query):
     return [entry for entry in entries if
             (not from_time or datetime.fromisoformat(entry["at"].replace("Z", "+00:00")) >= from_time) and
             (not to_time or datetime.fromisoformat(entry["at"].replace("Z", "+00:00")) < to_time)]
-
-
-def account_routing(index):
-    bindings = LIVE_KEYS[index]["route_bindings"]
-    rules = [bindings] + [route["rule"] for route in ROUTES if route["id"] in bindings["route_ids"]]
-    result = []
-    for prefix in ("", "denied_"):
-        models, refs, providers = set(), set(), set()
-        for rule in rules:
-            models.update(rule.get(prefix + "models", []))
-            refs.update(rule.get(prefix + "credential_ids", []))
-            providers.update((item["source"], item["provider"]) for item in rule.get(prefix + "credential_providers", []))
-        result.extend((models, refs, providers))
-    return result
-
-
-def account_routing_view(index):
-    models, refs, providers, denied_models, denied_refs, denied_providers = account_routing(index)
-    def credential_view(item):
-        return {"source": item["source"], "provider": item["provider"], "name": item["display_name"], "status": item["status"],
-                "denied": item["ref"] in denied_refs or (item["source"], item["provider"]) in denied_providers}
-    return {
-        "models": sorted(models), "denied_models": sorted(denied_models),
-        "credentials": [credential_view(item) for item in CREDENTIALS if item["ref"] in refs or (item["source"], item["provider"]) in providers],
-        "denied_credentials": [credential_view(item) for item in CREDENTIALS if item["ref"] in denied_refs] +
-            [{"source": source, "provider": provider, "provider_wide": True, "denied": True} for source, provider in sorted(denied_providers)],
-        "routing_valid": True, "warnings": [],
-    }
-
-
-def account_auth_files(index):
-    _, refs, providers, _, denied_refs, denied_providers = account_routing(index)
-    return [item for item in AUTH_FILES
-            if (not refs and not providers or AUTH_FILE_CREDENTIAL_REFS.get(item["auth_index"]) in refs or ("auth-files", item["category"]) in providers)
-            and AUTH_FILE_CREDENTIAL_REFS.get(item["auth_index"]) not in denied_refs
-            and ("auth-files", item["category"]) not in denied_providers]
 
 
 def refresh_route_counts():
@@ -1285,7 +1035,8 @@ def credential_labels(refs):
 def key_rows():
     for key in LIVE_KEYS:
         refresh_key_quota(key)
-    return [dict(key, route_names={route["id"]: route["name"] for route in ROUTES
+    return [dict(key, status=key_status(key),
+                 route_names={route["id"]: route["name"] for route in ROUTES
                                   if route["id"] in key["route_bindings"]["route_ids"]},
                  credential_labels=credential_labels(key["route_bindings"]["credential_ids"] + key["route_bindings"].get("denied_credential_ids", []))) for key in KEYS]
 
@@ -1365,10 +1116,6 @@ def payload_for(path, query):
 
 
 class Handler(BaseHTTPRequestHandler):
-    host_mode = "standalone"
-    initial_theme = "auto"
-    allow_api_key_quota_reset = False
-
     def send_response(self, code, message=None):
         time.sleep(random.uniform(0.4, 0.6))
         super().send_response(code, message)
@@ -1413,15 +1160,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(204)
             self.end_headers()
             return
-        if parsed.path == "/" and self.host_mode != "standalone":
-            label = "CPAMC" if self.host_mode == "cpamc" else "CPAMP"
-            body = (
-                HOST_SHELL.replace("__HOST_MODE__", self.host_mode)
-                .replace("__HOST_LABEL__", label)
-                .replace("__INITIAL_THEME__", self.initial_theme)
-            )
-            self.send_html(body)
-            return
         if parsed.path in ("/", "/ui"):
             body = UI_PATH.read_text()
             catalogs = {language: json.loads((UI_PATH.parent / "locales" / f"{language}.json").read_text())
@@ -1429,73 +1167,7 @@ class Handler(BaseHTTPRequestHandler):
             script = "const BILLING_MESSAGES = " + json.dumps(catalogs).replace("<", "\\u003c") + ";\n"
             script += (UI_PATH.parent / "i18n.js").read_text()
             body = body.replace("// BILLING_I18N", script)
-            if self.host_mode != "standalone":
-                body = body.replace(
-                    "</head>",
-                    '<script>localStorage.setItem("managementKey", JSON.stringify("dummy"));</script>\n</head>',
-                    1,
-                )
             self.send_html(body)
-            return
-        authorization = self.headers.get("Authorization", "")
-        api_keys = [f"sk-demo-{index:04d}" for index in range(1, len(LIVE_KEYS) + 1)]
-        if parsed.path == "/v1/models":
-            if not authorization.startswith("Bearer ") or authorization[7:] not in api_keys:
-                self.send_json(401, {"error": {"message": "API Key 无效"}})
-                return
-        resource_paths = {
-            f"{RESOURCE_BASE}/profile",
-            f"{RESOURCE_BASE}/subscription",
-            f"{RESOURCE_BASE}/routing",
-            f"{RESOURCE_BASE}/prices",
-            f"{RESOURCE_BASE}/events",
-            f"{RESOURCE_BASE}/errors",
-            f"{RESOURCE_BASE}/analysis",
-            f"{RESOURCE_BASE}/auth-files",
-            f"{RESOURCE_BASE}/auth-files/quota",
-            f"{RESOURCE_BASE}/auth-files/quota/reset",
-        }
-        if parsed.path in resource_paths:
-            if not authorization.startswith("Bearer ") or authorization[7:] not in api_keys:
-                self.send_json(401, {"error": {"message": "API Key 无效"}})
-                return
-            index = api_keys.index(authorization[7:])
-            if parsed.path.endswith("/profile"):
-                key = LIVE_KEYS[index]
-                self.send_json(200, {"tracked": True, "identity": {"preview": key["preview"], "label": key["label"]},
-                                     "can_reset_auth_quota": self.allow_api_key_quota_reset})
-            elif parsed.path.endswith("/subscription"):
-                key = LIVE_KEYS[index]
-                refresh_key_quota(key)
-                self.send_json(200, {"subscription": {"name": key["plan_name"], "unlimited": key["unlimited"], "blocked": key["blocked"], "windows": key["windows"], "retry_at": key.get("retry_at")}, "concurrency": {"limit": key["concurrency_limit"], "current": key["current_concurrency"]}})
-            elif parsed.path.endswith("/routing"):
-                self.send_json(200, account_routing_view(index))
-            elif parsed.path.endswith("/prices"):
-                self.send_json(200, model_prices(parse_qs(parsed.query), include_custom=False))
-            elif parsed.path.endswith("/analysis"):
-                self.send_json(200, analysis_view(parse_qs(parsed.query), LIVE_KEYS[index]["scope"]))
-            elif parsed.path.endswith("/errors"):
-                self.send_json(200, error_view(parse_qs(parsed.query), LIVE_KEYS[index]["scope"]))
-            elif parsed.path.endswith("/auth-files"):
-                self.send_json(200, {"files": account_auth_files(index)})
-            elif parsed.path.endswith("/auth-files/quota"):
-                query = parse_qs(parsed.query)
-                allowed = {
-                    item["auth_index"] for item in account_auth_files(index)
-                }
-                auth_index = query.get("auth_index", [""])[0]
-                payload = auth_file_quota(query) if auth_index in allowed else None
-                if payload is None:
-                    self.send_json(404, {"error": {"message": "认证文件不存在或不支持限额查询"}})
-                else:
-                    self.send_json(200, payload)
-            elif parsed.path.endswith("/auth-files/quota/reset"):
-                if not self.allow_api_key_quota_reset:
-                    self.send_json(403, {"error": {"message": "Quota resets are disabled for API key users"}})
-                else:
-                    self.reset_auth_quota(parsed, account_auth_files(index))
-            elif parsed.path.endswith("/events"):
-                self.send_json(200, request_event_view(parse_qs(parsed.query), LIVE_KEYS[index]["scope"]))
             return
         payload = payload_for(parsed.path, parse_qs(parsed.query))
         if payload is None:
@@ -1739,39 +1411,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Serve the billing UI with deterministic dummy data.")
+    parser = argparse.ArgumentParser(description="Serve the standalone billing UI with deterministic dummy data.")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument(
-        "--host",
-        choices=("standalone", "cpamc", "cpamp"),
-        default="standalone",
-        help="Wrap the plugin UI in a lightweight CPAMC or CPAMP host shell.",
-    )
-    parser.add_argument(
-        "--theme",
-        choices=("auto", "light", "white", "dark"),
-        default="auto",
-        help="Initial host theme; the preview shell can switch themes after startup.",
-    )
-    parser.add_argument(
-        "--allow-api-key-quota-reset",
-        action="store_true",
-        help="Allow API key users to reset Codex auth file quotas.",
-    )
     args = parser.parse_args()
     seed_paginated_history()
-    Handler.host_mode = args.host
-    Handler.initial_theme = args.theme
-    Handler.allow_api_key_quota_reset = args.allow_api_key_quota_reset
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
-    entry_path = "/ui" if args.host == "standalone" else "/"
     print(
-        f"Frontend dummy backend ({args.host}): http://127.0.0.1:{server.server_port}{entry_path}",
+        f"Frontend dummy backend: http://127.0.0.1:{server.server_port}/ui",
         flush=True,
     )
-    if args.host != "standalone":
-        print(f"Direct plugin document: http://127.0.0.1:{server.server_port}/ui", flush=True)
-    print(f"API Key account page: http://127.0.0.1:{server.server_port}/ui#account", flush=True)
     print("Data is reset on every restart. Press Ctrl-C to stop.", flush=True)
     try:
         server.serve_forever()
