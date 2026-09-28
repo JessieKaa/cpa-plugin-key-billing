@@ -89,6 +89,7 @@ func assertCostClose(t *testing.T, got, want float64) {
 
 func TestUsageHandleBillsWithoutResponseOrCompletionHooks(t *testing.T) {
 	app := newAppWithPrice(t, true)
+	manageKey(t, app, testAPIKey)
 	billUsage(t, app, 500, 400, 100, 500, 200)
 	cost, requests := requestEventCost(t, app)
 	assertCostClose(t, cost, 0.0005+0.00004+0.000125+0.001)
@@ -99,6 +100,7 @@ func TestUsageHandleBillsWithoutResponseOrCompletionHooks(t *testing.T) {
 
 func TestUsageHandleUsesClientKeyModelAliasAndCredential(t *testing.T) {
 	app := newAppWithPrice(t, true)
+	manageKey(t, app, testAPIKey)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "codex", ExecutorType: "CodexExecutor", Model: flowModel, Alias: "route/gpt-5.5",
 		ResponseModel: "gpt-5.6-luna", APIKey: testAPIKey, AuthIndex: "auth-7", AuthType: "oauth",
@@ -124,9 +126,7 @@ func TestUsageHandleUsesClientKeyModelAliasAndCredential(t *testing.T) {
 
 func TestUsageHandleReportsZeroUsageFailureAndBillsReportedFailureUsage(t *testing.T) {
 	app := newAppWithPrice(t, true)
-	if _, errSync := app.store.SyncKeys([]string{testAPIKey}, false); errSync != nil {
-		t.Fatalf("SyncKeys error = %v", errSync)
-	}
+	manageKey(t, app, testAPIKey)
 	if errLabel := app.store.SetLabel(flowScope(), "Alice"); errLabel != nil {
 		t.Fatalf("SetLabel error = %v", errLabel)
 	}
@@ -167,6 +167,7 @@ func TestUsageHandleReportsZeroUsageFailureAndBillsReportedFailureUsage(t *testi
 
 func TestUsageHandleBillsTheSuccessfulRetryAttemptOnce(t *testing.T) {
 	app := newAppWithPrice(t, true)
+	manageKey(t, app, testAPIKey)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "codex", Model: flowModel, Alias: flowModel, APIKey: testAPIKey,
 		AuthIndex: "auth-failed", AuthType: "oauth", Source: "failed@example.com",
@@ -190,6 +191,7 @@ func TestUsageHandleBillsTheSuccessfulRetryAttemptOnce(t *testing.T) {
 
 func TestUsageHandleBillsNonGeneratingRequest(t *testing.T) {
 	app := newAppWithPrice(t, true)
+	manageKey(t, app, testAPIKey)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "codex", ExecutorType: "CodexWebsocketsExecutor",
 		Model: flowModel, Alias: flowModel, APIKey: testAPIKey, Generate: false,
@@ -206,34 +208,33 @@ func TestUsageHandleBillsNonGeneratingRequest(t *testing.T) {
 	}
 }
 
-func TestUsageHandleRecordsUnscopedUsageWithoutCreatingKey(t *testing.T) {
+// Usage without a caller scope is unmanaged and therefore not accounted:
+// an unattributable record creates no event and no synthetic key.
+func TestUsageHandleIgnoresUnscopedUsage(t *testing.T) {
 	app := newAppWithPrice(t, true)
-	now := app.store.Now()
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "codex", ExecutorType: "CodexWebsocketsExecutor",
 		Model: flowModel, Alias: flowModel, AuthIndex: "unscoped-auth",
 		AuthType: "oauth", Source: "upstream@example.com", Generate: true,
-		RequestedAt: now.Add(-time.Minute),
+		RequestedAt: app.store.Now().Add(-time.Minute),
 		Detail:      UsageDetail{InputTokens: 1000, TotalTokens: 1000},
 	})
 
-	entries := requestEventEntries(t, app)
-	if len(entries) != 1 || entries[0].Scope != "" || entries[0].Source != "codex · upstream@example.com" {
-		t.Fatalf("entries = %+v", entries)
+	if entries := requestEventEntries(t, app); len(entries) != 0 {
+		t.Fatalf("unscoped usage recorded an event: %+v", entries)
 	}
 	if keys := app.store.KeyViews(); len(keys) != 0 {
 		t.Fatalf("keys = %+v, want no synthetic API Key", keys)
 	}
-	analysis, err := app.store.Analysis(billing.RequestEventQuery{From: now.Add(-time.Hour), To: now})
-	if err != nil || analysis.Summary.Requests != 1 || len(analysis.UsageDistribution.APIKeys) != 1 ||
-		analysis.UsageDistribution.APIKeys[0].Label != "Unassigned" {
+	analysis, err := app.store.Analysis(billing.RequestEventQuery{})
+	if err != nil || analysis.Summary.Requests != 0 || len(analysis.UsageDistribution.APIKeys) != 0 {
 		t.Fatalf("analysis = %+v, err = %v", analysis, err)
 	}
-	assertCostClose(t, analysis.Summary.Cost.TotalUSD, 0.001)
 }
 
 func TestUsageHandleDoesNotGuessUnknownProviderAccounting(t *testing.T) {
 	app := newAppWithPrice(t, true)
+	manageKey(t, app, testAPIKey)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "future-provider", Model: flowModel, Alias: flowModel, APIKey: testAPIKey,
 		Generate: true, Detail: UsageDetail{InputTokens: 100, OutputTokens: 20, TotalTokens: 120},
@@ -250,6 +251,7 @@ func TestUsageHandleDoesNotGuessUnknownProviderAccounting(t *testing.T) {
 
 func TestUsageHandlePersistsBillWithoutPlaintextKeys(t *testing.T) {
 	app, statePath := newAppWithPriceAndState(t, true)
+	manageKey(t, app, testAPIKey)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "openai-compatible-deepseek", ExecutorType: "OpenAICompatExecutor",
 		Model: flowModel, Alias: flowModel, APIKey: testAPIKey,

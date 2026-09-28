@@ -62,15 +62,14 @@ func keyView(scope string, key *KeyState, plan Plan, currentConcurrency int, now
 }
 
 func settleKeyPlan(key *KeyState, plan Plan, now time.Time) bool {
-	if key.PlanID == "" {
+	if key.PlanID == "" || plan.ID != key.PlanID {
+		// A bound key whose plan is missing is a broken managed binding, not
+		// an unmanaged key. Load-time validation rejects such a database, so
+		// only in-memory corruption reaches this branch; keep the binding and
+		// let ManagementPolicy fail admission instead of silently unbinding.
 		return false
 	}
-	if plan.ID == key.PlanID {
-		return settleExpiredCycles(key, now)
-	}
-	key.PlanID = ""
-	key.Cycles = nil
-	return true
+	return settleExpiredCycles(key, now)
 }
 
 func (s *Store) KeyViewForScope(scope string) (KeyView, bool) {

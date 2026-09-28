@@ -12,9 +12,7 @@ import (
 func restrictApp(t *testing.T, rule billing.RouteRule) *App {
 	t.Helper()
 	app := newAppWithPrice(t, true)
-	if _, errSync := app.store.SyncKeys([]string{testAPIKey}, false); errSync != nil {
-		t.Fatalf("SyncKeys error = %v", errSync)
-	}
+	manageKey(t, app, testAPIKey)
 	_, errCreate := app.store.CreateRoute(billing.Route{Name: "基础", Rule: rule}, []string{flowScope()})
 	if errCreate != nil {
 		t.Fatalf("CreateRoute error = %v", errCreate)

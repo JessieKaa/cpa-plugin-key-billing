@@ -12,9 +12,13 @@ import (
 
 func TestPriceAdmissionAndDeleteWithoutInventory(t *testing.T) {
 	app := newConfiguredApp(t)
+	scope := manageKey(t, app, "sk-price-admission-test")
 	intercept := func(format, model string) RequestInterceptResponse {
 		t.Helper()
-		raw, err := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, RequestInterceptRequest{SourceFormat: format, Model: model, RequestedModel: model}))
+		raw, err := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, RequestInterceptRequest{
+			SourceFormat: format, Model: model, RequestedModel: model,
+			Metadata: map[string]any{MetadataCallerScope: scope},
+		}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,8 +87,10 @@ func TestUsageAfterPriceDeletionKeepsTokensAndZeroCost(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			scope := manageKey(t, app, "sk-dummy-deleted-price")
 			request := RequestInterceptRequest{
 				Model: model, RequestedModel: model, SourceFormat: "openai",
+				Metadata: map[string]any{MetadataCallerScope: scope},
 			}
 			raw, err := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, request))
 			if err != nil {
@@ -146,9 +152,11 @@ func TestPriceListBatchesAndAccountCannotIncludeUnrequestedCustomPrices(t *testi
 
 func TestReferencePriceAdmissionAndUsageWithoutCustomPrices(t *testing.T) {
 	app := newConfiguredApp(t)
+	scope := manageKey(t, app, "sk-dummy-reference")
 	for i := range 2 {
 		raw, err := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, RequestInterceptRequest{
 			SourceFormat: "openai", Model: "gpt-4o", RequestedModel: "gpt-4o",
+			Metadata: map[string]any{MetadataCallerScope: scope},
 		}))
 		if err != nil {
 			t.Fatal(err)
@@ -203,6 +211,7 @@ func TestCustomPriceIdentityAcrossListingAdmissionAndUsage(t *testing.T) {
 			if err != nil || model != test.billingID || price.Source != test.wantSource || price.InputPer1M != test.wantRate {
 				t.Fatalf("admission price = %+v, model = %q, error = %v", price, model, err)
 			}
+			manageKey(t, app, "sk-dummy-price-identity")
 			publishUsageRecord(t, app, UsageRecord{
 				Model: "gpt-4o", Alias: test.requested, Provider: "openai", APIKey: "sk-dummy-price-identity",
 				RequestedAt: app.store.Now(), Detail: UsageDetail{InputTokens: 1000, TotalTokens: 1000},

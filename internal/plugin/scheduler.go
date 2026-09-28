@@ -148,16 +148,18 @@ func (a *App) pickCredential(raw []byte) ([]byte, error) {
 	if metadataString(req.Options.Metadata, MetadataSource) == SourcePluginHostModelCallback {
 		return OKEnvelope(SchedulerPickResponse{Handled: false})
 	}
-	a.observeCandidates(req.Candidates)
-	scope := metadataString(req.Options.Metadata, MetadataCallerScope)
-	if scope == "" {
+	// Resolve the management policy before observing candidates: an unmanaged
+	// key must not mutate plugin credential inventory or scheduling state.
+	policy := a.store.ManagementPolicy(metadataString(req.Options.Metadata, MetadataCallerScope))
+	if !policy.Managed {
 		return OKEnvelope(SchedulerPickResponse{Handled: false})
 	}
+	a.observeCandidates(req.Candidates)
 	requestedModel := metadataString(req.Options.Metadata, MetadataRequestedModel)
 	if requestedModel == "" {
 		requestedModel = req.Model
 	}
-	decision := a.store.ResolveRouting(scope, req.Model, requestedModel)
+	decision := a.store.ResolveRouting(policy.Scope, req.Model, requestedModel)
 	if decision.ConfigurationError != "" {
 		return ErrorEnvelope("routing_configuration_error", decision.ConfigurationError, http.StatusServiceUnavailable), nil
 	}
@@ -176,7 +178,7 @@ func (a *App) pickCredential(raw []byte) ([]byte, error) {
 	if len(allowed) == len(req.Candidates) {
 		return OKEnvelope(SchedulerPickResponse{Handled: false})
 	}
-	id := a.scheduler.pick(scope, routingPoolKey(decision.Model, decision), allowed)
+	id := a.scheduler.pick(policy.Scope, routingPoolKey(decision.Model, decision), allowed)
 	if id == "" {
 		return ErrorEnvelope("no_routed_credential", noRoutedCredentialMessage, http.StatusServiceUnavailable), nil
 	}

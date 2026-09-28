@@ -11,8 +11,32 @@ import (
 	"cpa-key-billing/internal/billing"
 )
 
+// manageKey puts one key under plugin management: a key without a plan
+// binding is unmanaged and bypasses plugin enforcement and accounting, so
+// tests exercising managed behavior bind a permissive test plan first.
+func manageKey(t *testing.T, app *App, apiKey string) string {
+	t.Helper()
+	scope := billing.CallerScope(apiKey)
+	if app.store.ManagementPolicy(scope).Managed {
+		return scope
+	}
+	if _, tracked := app.store.KeyViewForScope(scope); !tracked {
+		if _, errSync := app.store.SyncKeys([]string{apiKey}, false); errSync != nil {
+			t.Fatalf("SyncKeys error = %v", errSync)
+		}
+	}
+	if _, errCreate := app.store.CreatePlanWithBindings(billing.Plan{
+		Name:    "Managed test plan",
+		Windows: []billing.QuotaWindow{{Name: "额度", AmountUSD: 1_000_000, PeriodSeconds: 86400}},
+	}, []string{scope}); errCreate != nil {
+		t.Fatalf("CreatePlanWithBindings error = %v", errCreate)
+	}
+	return scope
+}
+
 func billOneRequest(t *testing.T, app *App, apiKey string, outputTokens int64) {
 	t.Helper()
+	manageKey(t, app, apiKey)
 	raw, errHandle := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, RequestInterceptRequest{
 		SourceFormat: "openai", Model: "gpt-5.5", RequestedModel: "gpt-5.5",
 		Metadata: map[string]any{

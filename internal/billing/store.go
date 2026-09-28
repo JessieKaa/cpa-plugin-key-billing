@@ -249,6 +249,9 @@ func editConfiguration[T any](s *Store, fn func(*State) (T, Changes, error)) (T,
 		if err != nil {
 			return err
 		}
+		if errValidate := next.validateManagedBindings(); errValidate != nil {
+			return errValidate
+		}
 		changes = s.dirty.merge(changes)
 		written = s.repo != nil && !changes.empty()
 		if written {

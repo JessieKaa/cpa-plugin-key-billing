@@ -58,7 +58,10 @@ func configuredAccountApp(t *testing.T) *App {
 	return app
 }
 
-func TestUsageCreatesKeyIdentityBeforeAnyFrontendSync(t *testing.T) {
+// Unmanaged traffic creates no key identity: a key without a plan binding
+// bypasses plugin accounting, so usage alone never persists a scope. Only a
+// configured key synchronized by the administrator can become managed.
+func TestUnmanagedUsageCreatesNoKeyIdentity(t *testing.T) {
 	for _, failed := range []bool{false, true} {
 		t.Run(map[bool]string{false: "success", true: "failure"}[failed], func(t *testing.T) {
 			app, path := newAppWithPriceAndState(t, true)
@@ -73,17 +76,11 @@ func TestUsageCreatesKeyIdentityBeforeAnyFrontendSync(t *testing.T) {
 			if err := app.store.Configure(cfg); err != nil {
 				t.Fatal(err)
 			}
-			keys := app.store.KeyViews()
-			if len(keys) != 1 || keys[0].Scope != billing.CallerScope(apiKey) || keys[0].Preview != "*******" || keys[0].InConfig {
-				t.Fatalf("usage did not persist a complete key identity: %+v", keys)
+			if keys := app.store.KeyViews(); len(keys) != 0 {
+				t.Fatalf("unmanaged usage persisted a key identity: %+v", keys)
 			}
-			result, err := app.store.SyncKeys([]string{apiKey}, false)
-			if err != nil || result.Added != 1 || len(app.store.KeyViews()) != 1 {
-				t.Fatalf("sync did not reuse the traffic-created key: %+v, %v", result, err)
-			}
-			events := requestEventEntries(t, app)
-			if len(events) != 1 || events[0].Preview != "*******" || events[0].Failed != failed {
-				t.Fatalf("sync changed usage history or lost its preview: %+v", events)
+			if events := requestEventEntries(t, app); len(events) != 0 {
+				t.Fatalf("unmanaged usage persisted an event: %+v", events)
 			}
 		})
 	}
@@ -227,9 +224,7 @@ func TestAccountAnalysisCannotCrossScopesOrExposeScope(t *testing.T) {
 
 func TestAccountRequestEventsUseTheAdministratorSource(t *testing.T) {
 	app := newAppWithPrice(t, true)
-	if _, errSync := app.store.SyncKeys([]string{accountTestKeyA}, false); errSync != nil {
-		t.Fatal(errSync)
-	}
+	manageKey(t, app, accountTestKeyA)
 	publishUsageRecord(t, app, UsageRecord{
 		Provider: "codex", ExecutorType: "CodexExecutor", Model: "gpt-5.5", Alias: "gpt-5.5",
 		APIKey: accountTestKeyA, AuthIndex: "auth-account-test", AuthType: "oauth",
@@ -265,9 +260,7 @@ func TestAccountEmailMasking(t *testing.T) {
 		t.Fatal(errHandle)
 	}
 	decodeResult(t, raw, nil)
-	if _, errSync := app.store.SyncKeys([]string{accountTestKeyA}, false); errSync != nil {
-		t.Fatal(errSync)
-	}
+	manageKey(t, app, accountTestKeyA)
 	if errLabel := app.store.SetLabel(billing.CallerScope(accountTestKeyA), "owner@example.com"); errLabel != nil {
 		t.Fatal(errLabel)
 	}

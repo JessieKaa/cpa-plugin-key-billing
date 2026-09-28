@@ -10,9 +10,7 @@ import (
 func concurrencyApp(t *testing.T, limit int) *App {
 	t.Helper()
 	app := newConfiguredApp(t)
-	if _, errSync := app.store.SyncKeys([]string{testAPIKey}, false); errSync != nil {
-		t.Fatalf("SyncKeys error = %v", errSync)
-	}
+	manageKey(t, app, testAPIKey)
 	if errSet := app.store.SetConcurrencyLimit(flowScope(), limit); errSet != nil {
 		t.Fatalf("SetConcurrencyLimit error = %v", errSet)
 	}

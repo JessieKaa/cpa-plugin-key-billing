@@ -60,22 +60,31 @@ func (a *App) interceptBeforeAuth(raw []byte) ([]byte, error) {
 	if a == nil || a.store == nil {
 		return OKEnvelope(RequestInterceptResponse{})
 	}
+	if !a.store.Enabled() {
+		return OKEnvelope(RequestInterceptResponse{})
+	}
+	// A key without a plan binding is unmanaged: admission bookkeeping, route,
+	// price, concurrency, and quota checks are all skipped so the request
+	// reaches CPA's native execution path unchanged.
+	policy := a.store.ManagementPolicy(metadataString(req.Metadata, MetadataCallerScope))
+	if !policy.Managed {
+		return OKEnvelope(RequestInterceptResponse{})
+	}
+	if policy.ConfigurationError != "" {
+		return OKEnvelope(priceRefusal(req.SourceFormat, "subscription_configuration_error", policy.ConfigurationError))
+	}
 	helper := metadataString(req.Metadata, MetadataSource) == SourcePluginHostModelCallback
 	var admission *requestAdmission
 	if !helper {
 		admission = a.beginAdmission(req.RequestID)
 		defer a.endAdmission(req.RequestID, admission)
 	}
-	if !a.store.Enabled() {
-		return OKEnvelope(RequestInterceptResponse{})
-	}
-	scope := metadataString(req.Metadata, MetadataCallerScope)
 	endpoint := metadataString(req.Metadata, MetadataRequestPath)
 
 	// Reject disallowed models before quota checks can open a subscription period.
 	if !helper {
-		routing := a.store.ResolveRouting(scope, req.Model, req.RequestedModel)
-		a.beginRouteLog(req.RequestID, scope, routing)
+		routing := a.store.ResolveRouting(policy.Scope, req.Model, req.RequestedModel)
+		a.beginRouteLog(req.RequestID, policy.Scope, routing)
 		if routing.ConfigurationError != "" {
 			return OKEnvelope(routingConfigurationResponse(req.SourceFormat, routing.ConfigurationError))
 		}
@@ -110,7 +119,7 @@ func (a *App) interceptBeforeAuth(raw []byte) ([]byte, error) {
 	slot := billing.SlotDecision{Allowed: true}
 	admitted := false
 	if generate {
-		slot = a.store.AcquireSlot(scope, req.RequestID)
+		slot = a.store.AcquireSlot(policy.Scope, req.RequestID)
 		if !slot.Allowed {
 			return OKEnvelope(concurrencyLimitResponse(req.SourceFormat, slot))
 		}
@@ -126,9 +135,9 @@ func (a *App) interceptBeforeAuth(raw []byte) ([]byte, error) {
 	// Reference price refresh may have taken time. Quota and Retry-After share the
 	// current instant, rather than the instant before the download.
 	now := a.store.Now()
-	decision := a.store.Authorize(scope, now)
+	decision := a.store.Authorize(policy.Scope, now)
 	if !decision.Allowed {
-		a.store.ReportQuotaBlock(scope, endpoint, decision)
+		a.store.ReportQuotaBlock(policy.Scope, endpoint, decision)
 		return OKEnvelope(quotaExhaustedResponse(req.SourceFormat, decision, now))
 	}
 
@@ -141,7 +150,10 @@ func (a *App) interceptAfterAuth(raw []byte) ([]byte, error) {
 	if errUnmarshal := json.Unmarshal(raw, &req); errUnmarshal != nil {
 		return nil, fmt.Errorf("Parse post-auth request interception parameters: %w", errUnmarshal)
 	}
-	if a != nil {
+	// Route-credential observation is bookkeeping for managed admissions. An
+	// unmanaged key bypasses it: no routing observation exists for a key the
+	// plugin does not account for.
+	if a != nil && a.store != nil && a.store.ManagementPolicy(metadataString(req.Metadata, MetadataCallerScope)).Managed {
 		a.observeRouteCredential(
 			req.RequestID,
 			metadataString(req.Metadata, MetadataSelectedAuth),
@@ -182,13 +194,19 @@ func (a *App) handleUsage(raw []byte) ([]byte, error) {
 	if a == nil || a.store == nil || !a.store.Enabled() {
 		return OKEnvelope(struct{}{})
 	}
-	scope := billing.CallerScope(record.APIKey)
+	// Unmanaged usage is not accounted: no token breakdown, price lookup,
+	// event or error record, quota change, or credential observation happens
+	// for a key without a plan binding.
+	policy := a.store.ManagementPolicy(billing.CallerScope(record.APIKey))
+	if !policy.Managed {
+		return OKEnvelope(struct{}{})
+	}
 	var recordError billing.RequestError
 	if record.Failed {
 		recordError = usageFailureDetails(record.Failure)
 	}
 	event := billing.UsageEvent{
-		Scope:               scope,
+		Scope:               policy.Scope,
 		KeyPreview:          billing.PreviewKey(record.APIKey),
 		AuthIndex:           record.AuthIndex,
 		Provider:            record.Provider,
@@ -212,7 +230,7 @@ func (a *App) handleUsage(raw []byte) ([]byte, error) {
 	} else {
 		a.store.RecordUsage(event)
 	}
-	a.observeCredentialUsage(record.AuthIndex, record.AuthType, record.Source, scope)
+	a.observeCredentialUsage(record.AuthIndex, record.AuthType, record.Source, policy.Scope)
 	return OKEnvelope(struct{}{})
 }
 

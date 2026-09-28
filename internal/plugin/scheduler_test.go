@@ -11,10 +11,7 @@ import (
 func configuredRoutingApp(t *testing.T, rule billing.RouteRule) (*App, string) {
 	app := newConfiguredApp(t)
 	const key = "sk-route-test-00000001"
-	scope := billing.CallerScope(key)
-	if _, err := app.store.SyncKeys([]string{key}, false); err != nil {
-		t.Fatal(err)
-	}
+	scope := manageKey(t, app, key)
 	_, err := app.store.CreateRoute(billing.Route{ID: "route-test", Name: "Route", Rule: rule}, []string{scope})
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +69,7 @@ func TestAfterAuthSelectionIsRecordedForTheSameRequest(t *testing.T) {
 	if _, err := app.HandleMethod(MethodRequestInterceptBefore, mustMarshal(t, RequestInterceptRequest{RequestID: "selected-request", Model: "gpt-5.6", RequestedModel: "gpt-5.6", Metadata: map[string]any{MetadataCallerScope: scope}})); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.HandleMethod(MethodRequestInterceptAfter, mustMarshal(t, RequestInterceptRequest{RequestID: "selected-request", Metadata: map[string]any{MetadataSelectedAuth: "codex-auth"}})); err != nil {
+	if _, err := app.HandleMethod(MethodRequestInterceptAfter, mustMarshal(t, RequestInterceptRequest{RequestID: "selected-request", Metadata: map[string]any{MetadataCallerScope: scope, MetadataSelectedAuth: "codex-auth"}})); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.HandleMethod(MethodRequestComplete, mustMarshal(t, RequestCompletion{RequestID: "selected-request", Outcome: "succeeded", StatusCode: 200})); err != nil {

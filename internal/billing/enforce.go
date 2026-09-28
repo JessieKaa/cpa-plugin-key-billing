@@ -29,8 +29,10 @@ func (s *Store) Authorize(scope string, at time.Time) Decision {
 		touched := Changes{Keys: []string{scope}}
 		plan, ok := state.FindPlan(key.PlanID)
 		if !ok {
-			key.PlanID, key.Cycles = "", nil
-			return allowed, touched
+			// Defense in depth only: load validation and ManagementPolicy keep
+			// a missing plan from reaching admission. Do not silently unbind,
+			// which would turn a broken managed binding into a pass-through.
+			return allowed, Changes{}
 		}
 		var changed Changes
 		if settleExpiredCycles(key, at) {

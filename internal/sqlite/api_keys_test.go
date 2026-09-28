@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,6 +34,25 @@ func TestSavingKeysNeverDeletesExistingRows(t *testing.T) {
 	keys := mustLoad(t, database).State.Keys
 	if len(keys) != 2 || keys["active"].Label != "Updated" || keys["deleted"].Preview != "sk-tes…0002" || keys["deleted"].DeletedAt.IsZero() {
 		t.Fatalf("saving keys deleted or replaced existing records: %+v", keys)
+	}
+}
+
+// A key bound to a missing plan fails loading instead of being silently
+// unbound: corrupt state stays a configuration error.
+func TestLoadingFailsWhenABoundPlanRowIsMissing(t *testing.T) {
+	database := openTestDB(t)
+	state := billing.NewState()
+	state.Plans = []billing.Plan{{ID: "gone", Name: "Gone", Windows: []billing.QuotaWindow{
+		{ID: "w", Name: "额度", AmountUSD: 5, PeriodSeconds: 3600},
+	}}}
+	state.Keys["bound"] = &billing.KeyState{Preview: "sk-tes…0001", InConfig: true, PlanID: "gone"}
+	mustSave(t, database, state, billing.Changes{AllKeys: true, Plans: true})
+	if _, err := database.db.Exec(`DELETE FROM plans`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Load(time.Time{}, time.Time{}); err == nil ||
+		!strings.Contains(err.Error(), "subscription plan bound to this API key does not exist") {
+		t.Fatalf("load error = %v, want a missing-plan failure", err)
 	}
 }
 
