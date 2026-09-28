@@ -338,10 +338,23 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Build standalone admin UI
+        run: go run ./cmd/build-ui -out release-assets/cpa-key-billing-ui.html
+
       - name: Generate checksums
         working-directory: release-assets
         run: |
-          sha256sum cpa-key-billing_*.tar.gz cpa-key-billing_*.zip | sort > checksums.txt
+          sha256sum cpa-key-billing-ui.html cpa-key-billing_*.tar.gz cpa-key-billing_*.zip | sort > checksums.txt
+
+      - name: Verify every artifact checksum
+        working-directory: release-assets
+        run: sha256sum -c checksums.txt
 
       - name: Extract release notes
         run: |
@@ -361,6 +374,7 @@ jobs:
           files: |
             release-assets/*.tar.gz
             release-assets/*.zip
+            release-assets/cpa-key-billing-ui.html
             release-assets/checksums.txt
           fail_on_unmatched_files: true
           overwrite_files: true
