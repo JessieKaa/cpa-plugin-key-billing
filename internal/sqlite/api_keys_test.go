@@ -37,6 +37,42 @@ func TestSavingKeysNeverDeletesExistingRows(t *testing.T) {
 	}
 }
 
+// Fork compatibility: an upstream-shaped v17 database — including unbound
+// traffic-created keys with usage history — loads unchanged, the fork can add
+// managed data through the same schema, and the database still reports schema
+// version 17 so upstream can reopen it.
+func TestForkAndUpstreamShareSchemaVersion17(t *testing.T) {
+	database := openTestDB(t)
+	state := billing.NewState()
+	state.Keys["unbound"] = &billing.KeyState{Preview: "*******"}
+	state.Plans = []billing.Plan{{ID: "fork-plan", Name: "Fork", Windows: []billing.QuotaWindow{
+		{ID: "w", Name: "额度", AmountUSD: 5, PeriodSeconds: 3600},
+	}}}
+	state.Keys["managed"] = &billing.KeyState{Preview: "sk-man…0001", InConfig: true, PlanID: "fork-plan"}
+	mustSave(t, database, state, billing.Changes{AllKeys: true, Plans: true})
+	if err := database.Save(billing.NewState(), billing.Changes{RequestErrorEvents: []billing.RequestErrorEvent{
+		{Event: billing.RequestEvent{At: time.Unix(1, 0), Scope: "unbound", UpstreamModel: "gpt-5.5"}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	var version int
+	if err := database.db.QueryRow("PRAGMA user_version").Scan(&version); err != nil || version != 17 {
+		t.Fatalf("schema version = %d, want 17 (err=%v)", version, err)
+	}
+	reopened := mustLoad(t, database).State
+	if key := reopened.Keys["unbound"]; key == nil || key.PlanID != "" {
+		t.Fatalf("upstream unbound key lost: %+v", key)
+	}
+	if key := reopened.Keys["managed"]; key == nil || key.PlanID != "fork-plan" {
+		t.Fatalf("fork managed key lost: %+v", key)
+	}
+	events, errEvents := database.RequestEvents(billing.RequestEventQuery{}, time.Time{})
+	if errEvents != nil || events.Total != 1 || events.Entries[0].Scope != "unbound" {
+		t.Fatalf("historical usage lost: %+v, %v", events, errEvents)
+	}
+}
+
 // A key bound to a missing plan fails loading instead of being silently
 // unbound: corrupt state stays a configuration error.
 func TestLoadingFailsWhenABoundPlanRowIsMissing(t *testing.T) {
