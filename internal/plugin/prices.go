@@ -8,21 +8,21 @@ import (
 	"cpa-key-billing/internal/billing"
 )
 
-func (a *App) listPrices(req ManagementRequest, access viewAccess) ManagementResponse {
+func (a *App) listAdminPrices(req ManagementRequest) ManagementResponse {
 	models := req.Query["model"]
-	includeCustom := !access.APIKey
+	includeCustom := true
 	if raw := req.Query.Get("include_custom"); raw != "" {
 		value, err := strconv.ParseBool(raw)
 		if err != nil {
-			return viewJSONError(access, http.StatusBadRequest, "invalid", "include_custom must be true or false")
+			return JSONError(http.StatusBadRequest, "invalid", "include_custom must be true or false")
 		}
-		includeCustom = includeCustom && value
+		includeCustom = value
 	}
 	prices, err := a.store.ModelPriceRows(models, includeCustom)
 	if err != nil {
-		return viewErrorResponse(access, err)
+		return errorResponse(err)
 	}
-	return viewJSON(access, http.StatusOK, prices)
+	return JSONResponse(http.StatusOK, prices)
 }
 
 func (a *App) putPrices(req ManagementRequest) ManagementResponse {

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"cpa-key-billing/internal/billing"
 	"cpa-key-billing/internal/messages"
 )
 
@@ -30,7 +28,7 @@ func TestAuthFilesExposeOnlyDisplayFieldsInCategoryOrder(t *testing.T) {
 			{"auth_index":"cl-1","name":"claude.json","type":"claude"}
 		]}`), nil
 	})
-	response := app.authFiles(viewAccess{})
+	response := app.listAdminAuthFiles(ManagementRequest{})
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", response.StatusCode, response.Body)
 	}
@@ -78,128 +76,9 @@ func TestNormalizeCodexPlan(t *testing.T) {
 	}
 }
 
-func TestAccountAuthFilesRequireTrackedAPIKey(t *testing.T) {
+func TestAuthQuotaUsesPhysicalUpstreamCredential(t *testing.T) {
 	app := newConfiguredApp(t)
-	hostCalls := 0
-	app.SetHostCaller(func(method string, _ any) (json.RawMessage, error) {
-		hostCalls++
-		if method != hostAuthList {
-			t.Fatalf("host method = %q, want %q", method, hostAuthList)
-		}
-		return json.RawMessage(`{"files":[]}`), nil
-	})
-
-	request := ManagementRequest{Headers: http.Header{"Authorization": {"Bearer " + accountTestKeyA}}}
-	access, ok := app.apiKeyViewAccess(request)
-	if !ok {
-		t.Fatal("valid bearer was rejected")
-	}
-	if response := app.authFiles(access); response.StatusCode != http.StatusUnauthorized {
-		t.Fatalf("untracked status = %d, want %d", response.StatusCode, http.StatusUnauthorized)
-	}
-	request.Query = url.Values{"auth_index": {"codex-1"}}
-	if response := app.authQuota(request, access); response.StatusCode != http.StatusUnauthorized {
-		t.Fatalf("untracked quota status = %d, want %d", response.StatusCode, http.StatusUnauthorized)
-	}
-	if hostCalls != 0 {
-		t.Fatalf("untracked account made %d host calls", hostCalls)
-	}
-	if _, errSync := app.store.SyncKeys([]string{accountTestKeyA}, false); errSync != nil {
-		t.Fatal(errSync)
-	}
-	access, _ = app.apiKeyViewAccess(request)
-	if response := app.authFiles(access); response.StatusCode != http.StatusOK {
-		t.Fatalf("tracked status = %d, body = %s", response.StatusCode, response.Body)
-	}
-	if hostCalls != 1 {
-		t.Fatalf("tracked account made %d host calls, want 1", hostCalls)
-	}
-}
-
-func TestAccountAuthFilesFollowCredentialRouting(t *testing.T) {
-	for _, mode := range []string{"allow", "deny"} {
-		t.Run(mode, func(t *testing.T) {
-			app := newConfiguredApp(t)
-			if _, errSync := app.store.SyncKeys([]string{accountTestKeyA}, false); errSync != nil {
-				t.Fatal(errSync)
-			}
-			scope := billing.CallerScope(accountTestKeyA)
-			rule := billing.RouteRule{
-				CredentialIDs: []string{
-					billing.CredentialFingerprint("auth-codex-allowed"),
-					billing.CredentialFingerprint("config-codex-exact"),
-				},
-				CredentialProviders: []billing.CredentialProviderSelector{
-					{Source: billing.CredentialSourceAuthFiles, Provider: "claude"},
-					{Source: billing.CredentialSourceAIProviders, Provider: "codex"},
-				},
-			}
-			if mode == "deny" {
-				rule = billing.RouteRule{DeniedCredentialIDs: []string{billing.CredentialFingerprint("auth-codex-denied")}}
-			}
-			if _, errRoute := app.store.CreateRoute(billing.Route{Name: "受限认证文件", Rule: rule}, []string{scope}); errRoute != nil {
-				t.Fatal(errRoute)
-			}
-			hostGetCalls := 0
-			app.SetHostCaller(func(method string, _ any) (json.RawMessage, error) {
-				switch method {
-				case hostAuthList:
-					return json.RawMessage(`{"files":[
-				{"id":"auth-codex-allowed","auth_index":"codex-allowed","name":"allowed.json","type":"codex","source":"file","path":"/auth/allowed.json"},
-				{"id":"auth-codex-denied","auth_index":"codex-denied","name":"denied.json","type":"codex","source":"file","path":"/auth/denied.json"},
-				{"id":"auth-claude","auth_index":"claude-allowed","name":"claude.json","type":"claude","source":"file","path":"/auth/claude.json"},
-				{"id":"config-codex-exact","auth_index":"config-exact","name":"configured-exact","type":"codex","provider":"codex","source":"config","runtime_only":true}
-			]}`), nil
-				case hostAuthGet:
-					hostGetCalls++
-					return nil, nil
-				default:
-					t.Fatalf("unexpected host method %q", method)
-					return nil, nil
-				}
-			})
-			access := viewAccess{APIKey: true, Scope: scope, Tracked: true}
-			response := app.authFiles(access)
-			if response.StatusCode != http.StatusOK {
-				t.Fatalf("status = %d, body = %s", response.StatusCode, response.Body)
-			}
-			var payload authFileListResponse
-			if errDecode := json.Unmarshal(response.Body, &payload); errDecode != nil {
-				t.Fatal(errDecode)
-			}
-			got := make([]string, 0, len(payload.Files))
-			for _, file := range payload.Files {
-				got = append(got, file.AuthIndex)
-			}
-			want := []string{"claude-allowed", "codex-allowed"}
-			if strings.Join(got, "|") != strings.Join(want, "|") {
-				t.Fatalf("auth files = %v, want %v", got, want)
-			}
-
-			request := ManagementRequest{Query: url.Values{"auth_index": {"codex-denied"}}}
-			if response := app.authQuota(request, access); response.StatusCode != http.StatusNotFound {
-				t.Fatalf("denied quota status = %d, body = %s", response.StatusCode, response.Body)
-			}
-			if hostGetCalls != 0 {
-				t.Fatalf("denied credential made %d host.auth.get calls", hostGetCalls)
-			}
-		})
-	}
-}
-
-func TestAccountAuthQuotaUsesPhysicalCredentialWithoutForwardingAPIKey(t *testing.T) {
-	app := newConfiguredApp(t)
-	if _, errSync := app.store.SyncKeys([]string{accountTestKeyA}, false); errSync != nil {
-		t.Fatal(errSync)
-	}
 	app.SetHostCaller(func(method string, payload any) (json.RawMessage, error) {
-		encoded, errMarshal := json.Marshal(payload)
-		if errMarshal != nil {
-			t.Fatal(errMarshal)
-		}
-		if strings.Contains(string(encoded), accountTestKeyA) {
-			t.Fatalf("host payload leaked downstream API key: %s", encoded)
-		}
 		switch method {
 		case hostAuthList:
 			return json.RawMessage(`{"files":[{"auth_index":"codex-1","name":"codex.json","type":"codex"}]}`), nil
@@ -216,15 +95,7 @@ func TestAccountAuthQuotaUsesPhysicalCredentialWithoutForwardingAPIKey(t *testin
 			return nil, nil
 		}
 	})
-	request := ManagementRequest{
-		Headers: http.Header{"Authorization": {"Bearer " + accountTestKeyA}},
-		Query:   url.Values{"auth_index": {"codex-1"}},
-	}
-	access, ok := app.apiKeyViewAccess(request)
-	if !ok {
-		t.Fatal("valid bearer was rejected")
-	}
-	response := app.authQuota(request, access)
+	response := app.adminAuthQuota(ManagementRequest{Query: url.Values{"auth_index": {"codex-1"}}})
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", response.StatusCode, response.Body)
 	}
@@ -238,7 +109,7 @@ func TestRuntimeOnlyAuthFileDisablesQuotaWithoutLeakingDetails(t *testing.T) {
 		}
 		return json.RawMessage(`{"files":[{"auth_index":"runtime-1","name":"runtime","type":"codex","runtime_only":true,"path":"/secret/runtime"}]}`), nil
 	})
-	response := app.authFiles(viewAccess{})
+	response := app.listAdminAuthFiles(ManagementRequest{})
 	var payload authFileListResponse
 	if errDecode := json.Unmarshal(response.Body, &payload); errDecode != nil {
 		t.Fatal(errDecode)
@@ -272,7 +143,7 @@ func TestAPIKeyAuthFileCannotBeQueried(t *testing.T) {
 			return nil, nil
 		}
 	})
-	response := app.authQuota(ManagementRequest{Query: url.Values{"auth_index": {"xai-1"}}}, viewAccess{})
+	response := app.adminAuthQuota(ManagementRequest{Query: url.Values{"auth_index": {"xai-1"}}})
 	if response.StatusCode != http.StatusNotFound {
 		t.Fatalf("status = %d, body = %s", response.StatusCode, response.Body)
 	}
@@ -344,7 +215,7 @@ func TestCodexQuotaPreservesAdditionalDynamicWindows(t *testing.T) {
 			return nil, nil
 		}
 	})
-	response := app.authQuota(ManagementRequest{Query: url.Values{"auth_index": {"codex-1"}}}, viewAccess{})
+	response := app.adminAuthQuota(ManagementRequest{Query: url.Values{"auth_index": {"codex-1"}}})
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, body = %s", response.StatusCode, response.Body)
 	}
@@ -635,48 +506,28 @@ func TestAuthQuotaReset(t *testing.T) {
 		upstreamBody   string
 		want           int
 	}{
-		{"admin", 204, "", 200},
-		{"account", 204, "", 200},
-		{"masked name", 204, "", 200},
+		{"success", 204, "", 200},
 		{"non-JSON success", 200, "accepted", 200},
 		{"no credits", 409, `{"error":{"message":"No reset credits available"}}`, 502},
 		{"expired credentials", 401, `{"error":{"message":"dummy-upstream-token expired"}}`, 502},
 		{"transport failure", 0, "", 502},
-		{"permission disabled", 0, "", 403},
-		{"unknown key", 0, "", 401},
 		{"invalid reset ID", 0, "", 400},
 		{"missing revision", 0, "", 409},
 		{"replaced file", 0, "", 409},
 		{"missing file", 0, "", 404},
 		{"unsupported provider", 0, "", 422},
 		{"disabled file", 0, "", 422},
-		{"denied credential", 0, "", 404},
-		{"outside allowlist", 0, "", 404},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			app := newTestApp(t)
-			t.Cleanup(app.Shutdown)
-			allowed := tc.name != "admin" && tc.name != "permission disabled"
-			config := string(testConfigYAML(t, true)) + "allow_api_key_quota_reset: " + strconv.FormatBool(allowed) +
-				"\nmask_api_key_view_emails: " + strconv.FormatBool(tc.name == "masked name") + "\n"
-			if err := app.configure(mustMarshal(t, LifecycleRequest{ConfigYAML: []byte(config)})); err != nil {
-				t.Fatal(err)
-			}
-			if _, err := app.store.SyncKeys([]string{accountTestKeyA}, false); err != nil {
-				t.Fatal(err)
-			}
+			app := newConfiguredApp(t)
 			file := hostAuthFile{ID: "reset-file", AuthIndex: "codex-1", Name: "user@example.com.json", Type: "codex", Source: "file"}
 			req := ManagementRequest{
-				Method: http.MethodGet, Path: resourceBase + routeAuthQuotaReset, HostCallbackID: "reset-callback",
-				Headers: http.Header{"Authorization": {"Bearer " + accountTestKeyA}},
-				Query:   url.Values{"auth_index": {file.AuthIndex}, "auth_name": {file.Name}, "auth_revision": {""}},
+				Method: http.MethodPost, Path: managementBase + routeAuthQuotaReset, HostCallbackID: "reset-callback",
+				Query: url.Values{"auth_index": {file.AuthIndex}, "auth_name": {file.Name}, "auth_revision": {""}},
 			}
+			req.Headers = http.Header{}
 			req.Headers.Set("X-Quota-Reset-ID", resetID)
 			switch tc.name {
-			case "admin":
-				req.Method, req.Path = http.MethodPost, managementBase+routeAuthQuotaReset
-			case "unknown key":
-				req.Headers.Set("Authorization", "Bearer dummy-unknown-key")
 			case "invalid reset ID":
 				req.Headers.Set("X-Quota-Reset-ID", "invalid")
 			case "missing revision":
@@ -689,14 +540,6 @@ func TestAuthQuotaReset(t *testing.T) {
 				file.Type = "claude"
 			case "disabled file":
 				file.Disabled = true
-			case "denied credential", "outside allowlist":
-				rule := billing.RouteRule{DeniedCredentialIDs: []string{billing.CredentialFingerprint(file.ID)}}
-				if tc.name == "outside allowlist" {
-					rule = billing.RouteRule{CredentialIDs: []string{billing.CredentialFingerprint("another-file")}}
-				}
-				if _, err := app.store.CreateRoute(billing.Route{Name: "reset access", Rule: rule}, []string{billing.CallerScope(accountTestKeyA)}); err != nil {
-					t.Fatal(err)
-				}
 			}
 			hostCalls, reads, consumes := 0, 0, 0
 			app.SetHostCaller(func(method string, payload any) (json.RawMessage, error) {
@@ -727,24 +570,6 @@ func TestAuthQuotaReset(t *testing.T) {
 					return nil, nil
 				}
 			})
-			access, _ := app.apiKeyViewAccess(req)
-			var profile accountProfileResponse
-			if err := json.Unmarshal(app.accountProfile(access).Body, &profile); err != nil {
-				t.Fatal(err)
-			}
-			if profile.CanResetAuthQuota != (allowed && access.Tracked) {
-				t.Fatalf("incorrect reset permission: %+v", profile)
-			}
-			if tc.name == "masked name" {
-				var files authFileListResponse
-				if err := json.Unmarshal(app.authFiles(access).Body, &files); err != nil {
-					t.Fatal(err)
-				}
-				if files.Files[0].Name == file.Name {
-					t.Fatal("file name was not masked")
-				}
-				req.Query.Set("auth_name", files.Files[0].Name)
-			}
 			raw, err := app.handleManagement(mustMarshal(t, req))
 			if err != nil {
 				t.Fatal(err)
@@ -761,7 +586,7 @@ func TestAuthQuotaReset(t *testing.T) {
 			if reads != wantCalls || consumes != wantCalls {
 				t.Fatalf("credential reads = %d, resets = %d; want %d", reads, consumes, wantCalls)
 			}
-			if (tc.want == 400 || tc.want == 401 || tc.want == 403) && hostCalls != 0 {
+			if tc.want == 400 && hostCalls != 0 {
 				t.Fatalf("rejected request made %d host calls", hostCalls)
 			}
 			if tc.want == 200 && string(response.Body) != `{"reset":true}` {
@@ -770,10 +595,35 @@ func TestAuthQuotaReset(t *testing.T) {
 			if strings.Contains(string(response.Body), "dummy-upstream-token") {
 				t.Fatal("response leaked credentials")
 			}
-			if tc.name != "admin" && !strings.Contains(response.Headers.Get("Cache-Control"), "no-store") {
-				t.Fatal("resource response is cacheable")
+			if !strings.Contains(response.Headers.Get("Cache-Control"), "no-store") {
+				t.Fatal("management response is cacheable")
 			}
 		})
+	}
+}
+
+// GET on the reset endpoint must not consume a credit: the Codex reset is
+// POST-only.
+func TestAuthQuotaResetRejectsGET(t *testing.T) {
+	app := newConfiguredApp(t)
+	hostCalls := 0
+	app.SetHostCaller(func(string, any) (json.RawMessage, error) {
+		hostCalls++
+		return nil, nil
+	})
+	raw, err := app.handleManagement(mustMarshal(t, ManagementRequest{
+		Method: http.MethodGet, Path: managementBase + routeAuthQuotaReset,
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var response ManagementResponse
+	decodeResult(t, raw, &response)
+	if response.StatusCode != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", response.StatusCode)
+	}
+	if hostCalls != 0 {
+		t.Fatalf("GET reset made %d host calls", hostCalls)
 	}
 }
 

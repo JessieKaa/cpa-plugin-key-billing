@@ -139,13 +139,6 @@ func TestPriceListBatchesAndAccountCannotIncludeUnrequestedCustomPrices(t *testi
 	if len(rows) != 2 {
 		t.Fatalf("admin union=%+v", rows)
 	}
-	response := callAccount(t, app, routePrices, accountTestKeyA, query)
-	if err := json.Unmarshal(response.Body, &rows); err != nil {
-		t.Fatal(err)
-	}
-	if len(rows) != 1 || rows[0].ModelID != "gpt-4o" {
-		t.Fatalf("account expanded custom prices: %+v", rows)
-	}
 	query.Set("include_custom", "invalid")
 	callOK(t, app, http.MethodGet, routePrices, query, nil, 400, nil)
 }

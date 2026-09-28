@@ -69,7 +69,7 @@ func TestProtocolRejectionsUseEnglishWithoutUITranslationMetadata(t *testing.T) 
 			}
 		}
 	}
-	if strings.IndexFunc(MenuLabel+MenuDescription+noRoutedCredentialMessage, func(r rune) bool { return unicode.Is(unicode.Han, r) }) >= 0 {
+	if strings.IndexFunc(PluginName+noRoutedCredentialMessage, func(r rune) bool { return unicode.Is(unicode.Han, r) }) >= 0 {
 		t.Fatal("registration and scheduler diagnostics must use English")
 	}
 }

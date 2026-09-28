@@ -10,18 +10,11 @@ import (
 	"cpa-key-billing/internal/messages"
 )
 
-const (
-	managementBase = "/v0/management/plugins/" + PluginID
-	resourceBase   = "/v0/resource/plugins/" + PluginID
-	resourceUIPath = "/ui"
-)
+const managementBase = "/v0/management/plugins/" + PluginID
 
 const (
 	routeKeys                   = "/keys"
 	routeCredentials            = "/credentials"
-	routeProfile                = "/profile"
-	routeSubscription           = "/subscription"
-	routeRouting                = "/routing"
 	routePrices                 = "/prices"
 	routeReferencePrices        = "/prices/reference"
 	routeReferencePricesStatus  = "/prices/reference/status"
@@ -62,7 +55,7 @@ var managementEndpoints = []managementEndpoint{
 		return JSONResponse(http.StatusOK, map[string]any{"routes": a.routeRows()})
 	}},
 	{http.MethodGet, routeCredentials, "View routing credential options", (*App).listCredentials},
-	{http.MethodGet, routePrices, "View model pricing", func(a *App, req ManagementRequest) ManagementResponse { return a.listPrices(req, viewAccess{}) }},
+	{http.MethodGet, routePrices, "View model pricing", (*App).listAdminPrices},
 	{http.MethodGet, routeReferencePrices, "Search model reference prices", (*App).searchReferencePrices},
 	{http.MethodGet, routeReferencePricesStatus, "View reference price status", func(a *App, _ ManagementRequest) ManagementResponse { return a.referencePriceStatus() }},
 	{http.MethodPost, routeReferencePricesRefresh, "Update reference prices", func(a *App, _ ManagementRequest) ManagementResponse { return a.refreshReferencePrices() }},
@@ -83,57 +76,28 @@ var managementEndpoints = []managementEndpoint{
 	{http.MethodPost, routeKeysSync, "Sync API keys from CLIProxyAPI", (*App).syncKeys},
 	{http.MethodPost, routeCredentialsSync, "Sync configured credentials", (*App).syncConfiguredCredentials},
 	{http.MethodGet, routeEventKeys, "View API keys in the event time range", (*App).eventKeys},
-	{http.MethodGet, routeEvents, "List request events with pagination", func(a *App, req ManagementRequest) ManagementResponse {
-		return a.listRequestEvents(req, viewAccess{})
-	}},
-	{http.MethodGet, routeErrors, "List error events with pagination", func(a *App, req ManagementRequest) ManagementResponse {
-		return a.listRequestErrors(req, viewAccess{})
-	}},
-	{http.MethodGet, routeAnalysis, "View usage distribution", func(a *App, req ManagementRequest) ManagementResponse { return a.analysis(req, viewAccess{}) }},
+	{http.MethodGet, routeEvents, "List request events with pagination", (*App).listAdminRequestEvents},
+	{http.MethodGet, routeErrors, "List error events with pagination", (*App).listAdminRequestErrors},
+	{http.MethodGet, routeAnalysis, "View usage distribution", (*App).adminAnalysis},
 	{http.MethodGet, routePluginLogs, "List plugin logs with pagination", (*App).listPluginLogs},
 	{http.MethodDelete, routePluginLogs, "Clear plugin logs", func(a *App, _ ManagementRequest) ManagementResponse { return a.clearPluginLogs() }},
-	{http.MethodGet, routeAuthFiles, "View auth files", func(a *App, _ ManagementRequest) ManagementResponse { return a.authFiles(viewAccess{}) }},
-	{http.MethodGet, routeAuthQuota, "Query auth file quotas", func(a *App, req ManagementRequest) ManagementResponse { return a.authQuota(req, viewAccess{}) }},
-	{http.MethodPost, routeAuthQuotaReset, "Reset auth file quotas", func(a *App, req ManagementRequest) ManagementResponse { return a.authQuotaReset(req, viewAccess{}) }},
+	{http.MethodGet, routeAuthFiles, "View auth files", (*App).listAdminAuthFiles},
+	{http.MethodGet, routeAuthQuota, "Query auth file quotas", (*App).adminAuthQuota},
+	{http.MethodPost, routeAuthQuotaReset, "Reset auth file quotas", (*App).adminAuthQuotaReset},
 }
 
-type resourceEndpoint struct {
-	path   string
-	handle func(*App, ManagementRequest, viewAccess) ManagementResponse
-}
-
-var resourceEndpoints = []resourceEndpoint{
-	{routeProfile, func(a *App, _ ManagementRequest, access viewAccess) ManagementResponse {
-		return a.accountProfile(access)
-	}},
-	{routeSubscription, func(a *App, _ ManagementRequest, access viewAccess) ManagementResponse {
-		return a.accountSubscription(access)
-	}},
-	{routeRouting, func(a *App, _ ManagementRequest, access viewAccess) ManagementResponse {
-		return a.accountRouting(access)
-	}},
-	{routePrices, (*App).listPrices},
-	{routeAnalysis, (*App).analysis},
-	{routeEvents, (*App).listRequestEvents},
-	{routeErrors, (*App).listRequestErrors},
-	{routeAuthFiles, func(a *App, _ ManagementRequest, access viewAccess) ManagementResponse { return a.authFiles(access) }},
-	{routeAuthQuota, (*App).authQuota},
-	{routeAuthQuotaReset, (*App).authQuotaReset},
-}
-
+// The plugin registers zero Resource routes: every dynamic operation is a
+// Management route behind CPA's management-key authentication, and the admin
+// UI ships as a standalone artifact served by the operator's reverse proxy.
 func managementRegistration() ManagementRegistrationResponse {
 	registration := ManagementRegistrationResponse{
 		Routes:    make([]ManagementRoute, 0, len(managementEndpoints)),
-		Resources: make([]ResourceRoute, 1, len(resourceEndpoints)+1),
+		Resources: []ResourceRoute{},
 	}
-	registration.Resources[0] = ResourceRoute{Path: resourceBase + resourceUIPath, Menu: MenuLabel, Description: MenuDescription}
 	for _, endpoint := range managementEndpoints {
 		registration.Routes = append(registration.Routes, ManagementRoute{
 			Method: endpoint.method, Path: managementBase + endpoint.path, Description: endpoint.description,
 		})
-	}
-	for _, endpoint := range resourceEndpoints {
-		registration.Resources = append(registration.Resources, ResourceRoute{Path: resourceBase + endpoint.path})
 	}
 	return registration
 }
@@ -146,27 +110,6 @@ func (a *App) handleManagement(raw []byte) ([]byte, error) {
 	path := strings.TrimRight(req.Path, "/")
 	if path == "" {
 		path = req.Path
-	}
-
-	if req.Method == http.MethodGet && path == resourceBase+resourceUIPath {
-		return OKEnvelope(ManagementResponse{
-			StatusCode: http.StatusOK,
-			Headers: http.Header{
-				"Content-Type":           []string{"text/html; charset=utf-8"},
-				"Cache-Control":          []string{"private, no-store"},
-				"Pragma":                 []string{"no-cache"},
-				"Referrer-Policy":        []string{"no-referrer"},
-				"X-Content-Type-Options": []string{"nosniff"},
-				"Content-Security-Policy": []string{
-					"default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://cdn.jsdelivr.net; " +
-						"font-src https://cdn.jsdelivr.net; connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
-				},
-			},
-			Body: uiHTML,
-		})
-	}
-	if path != resourceBase && strings.HasPrefix(path, resourceBase+"/") {
-		return OKEnvelope(a.routeResource(req, strings.TrimPrefix(path, resourceBase)))
 	}
 	if path != managementBase && !strings.HasPrefix(path, managementBase+"/") {
 		return OKEnvelope(JSONError(http.StatusNotFound, "not_found", "Management route not found: "+req.Method+" "+req.Path))

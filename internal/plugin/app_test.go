@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -124,36 +126,116 @@ func TestManagementRegistrationExposesOnlyCurrentEndpoints(t *testing.T) {
 		wantRoutes[key] = true
 	}
 
-	wantResources := map[string]bool{
-		"/ui": false, "/profile": false, "/subscription": false, "/routing": false, "/prices": false,
-		"/analysis": false, "/events": false, "/errors": false,
-		"/auth-files": false, "/auth-files/quota": false, "/auth-files/quota/reset": false,
+	// Registration guard: the fork registers zero Resource routes. Every
+	// dynamic operation is a Management route; adding a Resource registration
+	// or menu entry here must fail the build pipeline.
+	if len(registration.Resources) != 0 {
+		t.Fatalf("resources = %+v, want none", registration.Resources)
 	}
-	if len(registration.Resources) != len(wantResources) {
-		t.Fatalf("resources = %d, want %d: %+v", len(registration.Resources), len(wantResources), registration.Resources)
-	}
-	menuCount := 0
-	for _, resource := range registration.Resources {
-		path := strings.TrimPrefix(resource.Path, resourceBase)
-		if _, ok := wantResources[path]; !ok {
-			t.Fatalf("unexpected resource route %q", path)
-		}
-		wantResources[path] = true
-		if resource.Menu != "" {
-			menuCount++
-			if path != "/ui" || resource.Menu != MenuLabel {
-				t.Fatalf("invalid menu resource: %+v", resource)
+}
+
+// The former API-key resource paths no longer exist: every request under the
+// plugin's resource prefix receives 404, with or without a downstream key.
+func TestFormerResourceRoutesReturnNotFound(t *testing.T) {
+	app := newConfiguredApp(t)
+	const formerResourceBase = "/v0/resource/plugins/" + PluginID
+	paths := []string{"/ui", "/profile", "/subscription", "/routing", "/prices", "/analysis", "/events", "/errors",
+		"/auth-files", "/auth-files/quota", "/auth-files/quota/reset", "/"}
+	hostCalls := 0
+	app.SetHostCaller(func(string, any) (json.RawMessage, error) {
+		hostCalls++
+		return nil, nil
+	})
+	for _, path := range paths {
+		for _, withKey := range []bool{false, true} {
+			req := ManagementRequest{Method: http.MethodGet, Path: formerResourceBase + path}
+			if withKey {
+				req.Headers = http.Header{"Authorization": {"Bearer sk-former-resource-key"}}
+			}
+			raw, errHandle := app.handleManagement(mustMarshal(t, req))
+			if errHandle != nil {
+				t.Fatalf("handleManagement(%q): %v", path, errHandle)
+			}
+			var response ManagementResponse
+			decodeResult(t, raw, &response)
+			if response.StatusCode != http.StatusNotFound {
+				t.Fatalf("GET %s (key=%t) status = %d, want 404", path, withKey, response.StatusCode)
+			}
+			if withKey && strings.Contains(string(response.Body), "sk-former-resource-key") {
+				t.Fatalf("GET %s leaked the API key: %s", path, response.Body)
 			}
 		}
 	}
-	if menuCount != 1 {
-		t.Fatalf("menu resources = %d, want 1", menuCount)
+	if hostCalls != 0 {
+		t.Fatalf("resource requests reached privileged host callbacks: %d", hostCalls)
+	}
+}
+
+// Deprecated account-portal YAML fields still parse, but enable no route,
+// UI control, masking, or reset permission.
+func TestDeprecatedAccountFieldsEnableNothing(t *testing.T) {
+	app := newTestApp(t)
+	t.Cleanup(app.Shutdown)
+	config := "enabled: true\nmask_api_key_view_emails: true\nallow_api_key_quota_reset: true\n" +
+		"state_file: \"" + filepath.Join(t.TempDir(), "state.db") + "\"\n"
+	raw, errHandle := app.HandleMethod(MethodPluginRegister, mustMarshal(t, LifecycleRequest{ConfigYAML: []byte(config)}))
+	if errHandle != nil {
+		t.Fatalf("plugin.register with deprecated fields error = %v", errHandle)
+	}
+	decodeResult(t, raw, nil)
+	if resources := managementRegistration().Resources; len(resources) != 0 {
+		t.Fatalf("deprecated fields registered resources: %+v", resources)
+	}
+	const formerResourceBase = "/v0/resource/plugins/" + PluginID
+	for _, path := range []string{"/ui", "/profile", "/auth-files/quota/reset"} {
+		for _, method := range []string{http.MethodGet, http.MethodPost} {
+			raw, errHandle := app.handleManagement(mustMarshal(t, ManagementRequest{
+				Method: method, Path: formerResourceBase + path,
+				Headers: http.Header{"Authorization": {"Bearer sk-deprecated-field-key"}},
+			}))
+			if errHandle != nil {
+				t.Fatalf("handleManagement(%s %q): %v", method, path, errHandle)
+			}
+			var response ManagementResponse
+			decodeResult(t, raw, &response)
+			if response.StatusCode != http.StatusNotFound {
+				t.Fatalf("%s %s status = %d, want 404", method, path, response.StatusCode)
+			}
+		}
+	}
+}
+
+// Every management response, success or error, carries no-store headers.
+func TestManagementResponsesCarryNoStoreHeaders(t *testing.T) {
+	app := newConfiguredApp(t)
+	requests := []ManagementRequest{
+		{Method: http.MethodGet, Path: managementBase + routeKeys},
+		{Method: http.MethodGet, Path: managementBase + "/missing"},
+		{Method: http.MethodPost, Path: managementBase + routeKeysLabel, Body: []byte(`{"scope":""}`)},
+		{Method: http.MethodGet, Path: managementBase + routeEvents},
+		{Method: http.MethodGet, Path: managementBase + routeEvents, Query: url.Values{"failed": {"unknown"}}},
+	}
+	for _, req := range requests {
+		raw, errHandle := app.handleManagement(mustMarshal(t, req))
+		if errHandle != nil {
+			t.Fatalf("handleManagement(%s %s): %v", req.Method, req.Path, errHandle)
+		}
+		var response ManagementResponse
+		decodeResult(t, raw, &response)
+		if got := response.Headers.Get("Cache-Control"); got != "private, no-store" {
+			t.Fatalf("%s %s Cache-Control = %q", req.Method, req.Path, got)
+		}
+		for header, want := range map[string]string{"Pragma": "no-cache", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff"} {
+			if got := response.Headers.Get(header); got != want {
+				t.Fatalf("%s %s %s = %q, want %q", req.Method, req.Path, header, got, want)
+			}
+		}
 	}
 }
 
 func TestManagementRejectsLookalikeRoutePrefixes(t *testing.T) {
 	app := newTestApp(t)
-	for _, path := range []string{managementBase + "-other/keys", resourceBase + "-other/ui"} {
+	for _, path := range []string{managementBase + "-other/keys", "/v0/resource/plugins/" + PluginID + "-other/ui"} {
 		raw, errHandle := app.handleManagement(mustMarshal(t, ManagementRequest{
 			Method: http.MethodGet,
 			Path:   path,

@@ -19,8 +19,8 @@ const (
 	maxEventPageSize     = 1000
 )
 
-func sourceFilterToken(scope, source string) string {
-	digest := sha256.Sum256([]byte("filter:v1\x00source\x00" + scope + "\x00" + source))
+func sourceFilterToken(source string) string {
+	digest := sha256.Sum256([]byte("filter:v1\x00source\x00" + source))
 	return hex.EncodeToString(digest[:])
 }
 
@@ -32,133 +32,81 @@ func validSourceFilterToken(value string) bool {
 	return err == nil
 }
 
-func resolveSourceFilter(scope, token string, sources []string) (string, bool) {
+func resolveSourceFilter(token string, sources []string) (string, bool) {
 	for _, source := range sources {
-		if sourceFilterToken(scope, source) == token {
+		if sourceFilterToken(source) == token {
 			return source, true
 		}
 	}
 	return "", false
 }
 
-func sourceFilterOptions(scope string, sources []string) []billing.RequestSourceOption {
+func sourceFilterOptions(sources []string) []billing.RequestSourceOption {
 	options := make([]billing.RequestSourceOption, 0, len(sources))
 	for _, source := range sources {
 		options = append(options, billing.RequestSourceOption{
-			Value: sourceFilterToken(scope, source),
+			Value: sourceFilterToken(source),
 			Label: source,
 		})
 	}
 	return options
 }
 
-type viewAccess struct {
-	APIKey     bool
-	Scope      string
-	Tracked    bool
-	MaskEmails bool
-	Key        billing.KeyView
-}
-
-func (a *App) apiKeyViewAccess(req ManagementRequest) (viewAccess, bool) {
-	scope, ok := accountScope(req.Headers)
-	if !ok {
-		return viewAccess{}, false
-	}
-	view, tracked := a.store.KeyViewForScope(scope)
-	return viewAccess{APIKey: true, Scope: scope, Tracked: tracked, MaskEmails: a.store.MaskAPIKeyViewEmails(), Key: view}, true
-}
-
-func (a *App) routeResource(req ManagementRequest, suffix string) ManagementResponse {
-	if req.Method != http.MethodGet {
-		return apiKeyJSONError(http.StatusNotFound, "not_found", "Resource route not found: "+req.Method+" "+req.Path)
-	}
-	var handler func(*App, ManagementRequest, viewAccess) ManagementResponse
-	for _, endpoint := range resourceEndpoints {
-		if endpoint.path == suffix {
-			handler = endpoint.handle
-			break
-		}
-	}
-	if handler == nil {
-		return apiKeyJSONError(http.StatusNotFound, "not_found", "Resource route not found: "+req.Method+" "+req.Path)
-	}
-	access, ok := a.apiKeyViewAccess(req)
-	if !ok {
-		return apiKeyUnauthorized()
-	}
-	return handler(a, req, access)
-}
-
-func (a *App) listRequestEvents(req ManagementRequest, access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return viewJSON(access, http.StatusOK, billing.RequestEventView{Entries: []billing.RequestEventRow{}})
-	}
+// Admin handlers serve only management-authenticated flows. There is no
+// downstream API-key access path in this fork.
+func (a *App) listAdminRequestEvents(req ManagementRequest) ManagementResponse {
 	query := billing.RequestEventQuery{
-		Scope: access.Scope, Model: strings.TrimSpace(req.Query.Get("model")),
+		Model:  strings.TrimSpace(req.Query.Get("model")),
 		Source: strings.TrimSpace(req.Query.Get("source")), Executor: strings.TrimSpace(req.Query.Get("executor")),
 		Provider: strings.TrimSpace(req.Query.Get("provider")),
 		Limit:    defaultEventPageSize,
 	}
-	if !access.APIKey {
-		query.KeyScope = strings.TrimSpace(req.Query.Get("api_key"))
-	}
+	query.KeyScope = strings.TrimSpace(req.Query.Get("api_key"))
 	switch raw := strings.TrimSpace(req.Query.Get("failed")); raw {
 	case "":
 	case "false", "true":
 		failed := raw == "true"
 		query.Failed = &failed
 	default:
-		return viewJSONError(access, http.StatusBadRequest, "invalid", "failed must be true or false")
+		return JSONError(http.StatusBadRequest, "invalid", "failed must be true or false")
 	}
 	if errQuery := requestPageParams(req.Query, &query.Offset, &query.Limit, &query.From, &query.To, &query.SnapshotID); errQuery != nil {
-		return viewErrorResponse(access, errQuery)
+		return errorResponse(errQuery)
 	}
 	if query.Source != "" {
 		if !validSourceFilterToken(query.Source) {
-			return viewJSONError(access, http.StatusBadRequest, "invalid_filter", "Invalid source filter; refresh the page")
+			return JSONError(http.StatusBadRequest, "invalid_filter", "Invalid source filter; refresh the page")
 		}
 		probe, err := a.store.RequestEvents(billing.RequestEventQuery{
-			Scope: access.Scope, From: query.From, To: query.To, SnapshotID: query.SnapshotID, IncludeFilters: true, Limit: 1,
+			From: query.From, To: query.To, SnapshotID: query.SnapshotID, IncludeFilters: true, Limit: 1,
 		})
 		if err != nil {
-			return viewErrorResponse(access, err)
+			return errorResponse(err)
 		}
 		query.SnapshotID = &probe.SnapshotID
 		if probe.Filters == nil {
-			return viewJSONError(access, http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
+			return JSONError(http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
 		}
 		var found bool
-		query.Source, found = resolveSourceFilter(access.Scope, query.Source, probe.Filters.Sources)
+		query.Source, found = resolveSourceFilter(query.Source, probe.Filters.Sources)
 		if !found {
-			return viewJSONError(access, http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
+			return JSONError(http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
 		}
 	}
 	query.IncludeFilters = query.Offset == 0
 	view, err := a.store.RequestEvents(query)
 	if err != nil {
-		return viewErrorResponse(access, err)
-	}
-	if access.APIKey {
-		for i := range view.Entries {
-			view.Entries[i].Scope = ""
-			view.Entries[i].AuthIndex = ""
-			view.Entries[i].Preview = ""
-			view.Entries[i].Label = ""
-		}
+		return errorResponse(err)
 	}
 	if view.Filters != nil {
-		view.Filters.SourceOptions = sourceFilterOptions(access.Scope, view.Filters.Sources)
+		view.Filters.SourceOptions = sourceFilterOptions(view.Filters.Sources)
 	}
-	return viewJSON(access, http.StatusOK, view)
+	return JSONResponse(http.StatusOK, view)
 }
 
-func (a *App) listRequestErrors(req ManagementRequest, access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return viewJSON(access, http.StatusOK, billing.RequestErrorView{Entries: []billing.RequestErrorRow{}})
-	}
+func (a *App) listAdminRequestErrors(req ManagementRequest) ManagementResponse {
 	query := billing.RequestErrorQuery{
-		Scope: access.Scope, Model: strings.TrimSpace(req.Query.Get("model")),
+		Model:  strings.TrimSpace(req.Query.Get("model")),
 		Source: strings.TrimSpace(req.Query.Get("source")), Executor: strings.TrimSpace(req.Query.Get("executor")),
 		Provider: strings.TrimSpace(req.Query.Get("provider")), ErrorType: strings.TrimSpace(req.Query.Get("error_type")),
 		ErrorTypeEmpty: req.Query.Get("error_type_empty") == "true",
@@ -167,75 +115,57 @@ func (a *App) listRequestErrors(req ManagementRequest, access viewAccess) Manage
 	if raw := strings.TrimSpace(req.Query.Get("status_code")); raw != "" {
 		value, err := strconv.Atoi(raw)
 		if err != nil || value < 100 || value > 599 {
-			return viewJSONError(access, http.StatusBadRequest, "invalid", "HTTP status code must be an integer from 100 to 599")
+			return JSONError(http.StatusBadRequest, "invalid", "HTTP status code must be an integer from 100 to 599")
 		}
 		query.StatusCode = value
 	}
-	if !access.APIKey {
-		query.KeyScope = strings.TrimSpace(req.Query.Get("api_key"))
-	}
+	query.KeyScope = strings.TrimSpace(req.Query.Get("api_key"))
 	if err := requestPageParams(req.Query, &query.Offset, &query.Limit, &query.From, &query.To, &query.SnapshotID); err != nil {
-		return viewErrorResponse(access, err)
+		return errorResponse(err)
 	}
 	if query.Source != "" {
 		if !validSourceFilterToken(query.Source) {
-			return viewJSONError(access, http.StatusBadRequest, "invalid_filter", "Invalid source filter; refresh the page")
+			return JSONError(http.StatusBadRequest, "invalid_filter", "Invalid source filter; refresh the page")
 		}
 		probe, err := a.store.RequestErrors(billing.RequestErrorQuery{
-			Scope: access.Scope, From: query.From, To: query.To, SnapshotID: query.SnapshotID, IncludeFilters: true, Limit: 1,
+			From: query.From, To: query.To, SnapshotID: query.SnapshotID, IncludeFilters: true, Limit: 1,
 		})
 		if err != nil {
-			return viewErrorResponse(access, err)
+			return errorResponse(err)
 		}
 		query.SnapshotID = &probe.SnapshotID
 		if probe.Filters == nil {
-			return viewJSONError(access, http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
+			return JSONError(http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
 		}
 		var found bool
-		query.Source, found = resolveSourceFilter(access.Scope, query.Source, probe.Filters.Sources)
+		query.Source, found = resolveSourceFilter(query.Source, probe.Filters.Sources)
 		if !found {
-			return viewJSONError(access, http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
+			return JSONError(http.StatusBadRequest, "expired_filter", "Source filter expired; refresh the page")
 		}
 	}
 	query.IncludeFilters = query.Offset == 0
 	view, err := a.store.RequestErrors(query)
 	if err != nil {
-		return viewErrorResponse(access, err)
-	}
-	if access.APIKey {
-		for i := range view.Entries {
-			view.Entries[i].Scope, view.Entries[i].AuthIndex = "", ""
-			view.Entries[i].Preview, view.Entries[i].Label = "", ""
-		}
+		return errorResponse(err)
 	}
 	if view.Filters != nil {
-		view.Filters.SourceOptions = sourceFilterOptions(access.Scope, view.Filters.Sources)
+		view.Filters.SourceOptions = sourceFilterOptions(view.Filters.Sources)
 	}
-	return viewJSON(access, http.StatusOK, view)
+	return JSONResponse(http.StatusOK, view)
 }
 
-func (a *App) analysis(req ManagementRequest, access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return viewJSON(access, http.StatusOK, billing.AnalysisView{
-			UsageDistribution: billing.UsageDistribution{
-				APIKeys: []billing.AnalysisComposition{}, Models: []billing.AnalysisComposition{}, Sources: []billing.AnalysisComposition{},
-			},
-		})
-	}
-	query := billing.RequestEventQuery{Scope: access.Scope}
-	if !access.APIKey {
-		query.KeyScope = strings.TrimSpace(req.Query.Get("api_key"))
-	}
+func (a *App) adminAnalysis(req ManagementRequest) ManagementResponse {
+	query := billing.RequestEventQuery{KeyScope: strings.TrimSpace(req.Query.Get("api_key"))}
 	if err := timeParam(req.Query, "from", &query.From); err != nil {
-		return viewErrorResponse(access, err)
+		return errorResponse(err)
 	}
 	if err := timeParam(req.Query, "to", &query.To); err != nil {
-		return viewErrorResponse(access, err)
+		return errorResponse(err)
 	}
 	if name := strings.TrimSpace(req.Query.Get("timezone")); name != "" {
 		location, err := time.LoadLocation(name)
 		if err != nil {
-			return viewErrorResponse(access, &billing.Error{
+			return errorResponse(&billing.Error{
 				Kind: billing.KindInvalid, Msg: "Timezone must be a valid IANA identifier",
 			})
 		}
@@ -243,12 +173,12 @@ func (a *App) analysis(req ManagementRequest, access viewAccess) ManagementRespo
 	}
 	view, err := a.store.Analysis(query)
 	if err != nil {
-		return viewErrorResponse(access, err)
+		return errorResponse(err)
 	}
-	if access.APIKey || query.KeyScope != "" {
+	if query.KeyScope != "" {
 		view.UsageDistribution.APIKeys = []billing.AnalysisComposition{}
 	}
-	return viewJSON(access, http.StatusOK, view)
+	return JSONResponse(http.StatusOK, view)
 }
 
 func requestPageParams(values url.Values, offset, limit *int, from, to *time.Time, snapshot **int64) error {
@@ -306,51 +236,6 @@ func countParam(query url.Values, name string, target *int) error {
 	}
 	*target = parsed
 	return nil
-}
-
-func viewJSON(access viewAccess, status int, payload any) ManagementResponse {
-	if access.APIKey {
-		handled := false
-		if access.MaskEmails {
-			payload, handled = maskAPIKeyPayload(payload)
-		}
-		response := apiKeyJSON(status, payload)
-		return protectAPIKeyResponse(access, response, handled)
-	}
-	return JSONResponse(status, payload)
-}
-
-func viewJSONError(access viewAccess, status int, code, message string) ManagementResponse {
-	if access.APIKey {
-		return protectAPIKeyResponse(access, apiKeyJSONError(status, code, message), false)
-	}
-	return JSONError(status, code, message)
-}
-
-func viewDetailedError(access viewAccess, status int, code string, err error) ManagementResponse {
-	response := jsonMessageError(status, code, messages.FromError(err))
-	if access.APIKey {
-		response = protectAPIKeyResponse(access, response, false)
-	}
-	return response
-}
-
-func viewErrorResponse(access viewAccess, err error) ManagementResponse {
-	response := errorResponse(err)
-	if access.APIKey {
-		response = protectAPIKeyResponse(access, response, false)
-	}
-	return response
-}
-
-func protectAPIKeyResponse(access viewAccess, response ManagementResponse, handled bool) ManagementResponse {
-	if access.APIKey {
-		secureAPIKeyResponse(&response)
-		if access.MaskEmails && !handled {
-			response.Body = []byte(maskEmails(string(response.Body)))
-		}
-	}
-	return response
 }
 
 func (a *App) eventKeys(req ManagementRequest) ManagementResponse {

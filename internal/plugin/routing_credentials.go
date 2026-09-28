@@ -90,21 +90,6 @@ func routingAllowsCredential(rawID, source, provider string, decision billing.Ro
 	return decision.AllowsCredential(ref, source, provider)
 }
 
-func routingAllowsAuthFile(file hostAuthFile, decision billing.RoutingDecision) bool {
-	source := credentialSourceFromHost(file)
-	if source == billing.CredentialSourceAIProviders {
-		return false
-	}
-	if source == "" {
-		source = billing.CredentialSourceAuthFiles
-	}
-	provider := file.Provider
-	if strings.TrimSpace(provider) == "" {
-		provider = file.Type
-	}
-	return routingAllowsCredential(file.ID, source, provider, decision)
-}
-
 func credentialSourceFromCandidate(candidate SchedulerAuthCandidate) string {
 	backend := strings.ToLower(strings.TrimSpace(candidate.Attributes["source_backend"]))
 	source := strings.ToLower(strings.TrimSpace(candidate.Attributes["source"]))

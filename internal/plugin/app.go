@@ -151,12 +151,12 @@ func registration() Registration {
 				{
 					Name:        "mask_api_key_view_emails",
 					Type:        "boolean",
-					Description: "Mask email addresses in API key account responses",
+					Description: "Deprecated no-op: the downstream account portal no longer exists",
 				},
 				{
 					Name:        "allow_api_key_quota_reset",
 					Type:        "boolean",
-					Description: "Allow API key users to reset Codex auth file quotas using upstream reset credits",
+					Description: "Deprecated no-op: the downstream account portal no longer exists",
 				},
 				{
 					Name:        "state_file",

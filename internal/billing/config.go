@@ -12,12 +12,16 @@ import (
 const DefaultStateFile = "plugins/cpa-key-billing-state-v1.db"
 
 type Config struct {
-	Enabled               bool   `yaml:"enabled"`
-	Debug                 bool   `yaml:"debug"`
-	StateFile             string `yaml:"state_file"`
-	CodexFastModeBilling  bool   `yaml:"codex_fast_mode_billing"`
-	MaskAPIKeyViewEmails  bool   `yaml:"mask_api_key_view_emails"`
-	AllowAPIKeyQuotaReset bool   `yaml:"allow_api_key_quota_reset"`
+	Enabled              bool   `yaml:"enabled"`
+	Debug                bool   `yaml:"debug"`
+	StateFile            string `yaml:"state_file"`
+	CodexFastModeBilling bool   `yaml:"codex_fast_mode_billing"`
+	// Deprecated no-ops kept for one compatibility cycle: the downstream
+	// account portal no longer exists, so these settings enable no route, UI
+	// control, masking, or reset permission. Removing them would break strict
+	// YAML decoding for existing configurations.
+	MaskAPIKeyViewEmails  bool `yaml:"mask_api_key_view_emails"`
+	AllowAPIKeyQuotaReset bool `yaml:"allow_api_key_quota_reset"`
 }
 
 func DefaultConfig() Config {

@@ -28,6 +28,18 @@ func ErrorEnvelope(code, message string, httpStatus int) []byte {
 	return raw
 }
 
+// Management responses carry key previews, plans, prices, events, and quota
+// data for an administrator's authenticated session. They must never be
+// cached by intermediaries or the browser back/forward cache, and never
+// indexed as generic content.
+func secureManagementHeaders(headers http.Header) http.Header {
+	headers.Set("Cache-Control", "private, no-store")
+	headers.Set("Pragma", "no-cache")
+	headers.Set("Referrer-Policy", "no-referrer")
+	headers.Set("X-Content-Type-Options", "nosniff")
+	return headers
+}
+
 func JSONResponse(status int, payload any) ManagementResponse {
 	body, errMarshal := json.Marshal(payload)
 	if errMarshal != nil {
@@ -36,7 +48,7 @@ func JSONResponse(status int, payload any) ManagementResponse {
 	}
 	return ManagementResponse{
 		StatusCode: status,
-		Headers:    http.Header{"Content-Type": []string{"application/json; charset=utf-8"}},
+		Headers:    secureManagementHeaders(http.Header{"Content-Type": []string{"application/json; charset=utf-8"}}),
 		Body:       body,
 	}
 }

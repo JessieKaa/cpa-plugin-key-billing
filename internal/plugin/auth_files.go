@@ -111,73 +111,59 @@ type resetCreditExpiry struct {
 	ExpiresAt string `json:"expires_at"`
 }
 
-func (a *App) authFiles(access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return apiKeyUnauthorized()
-	}
-	files, errList := a.listAuthFiles(access)
+// Auth-file inventory and quota operations are admin-only Management flows.
+func (a *App) listAdminAuthFiles(_ ManagementRequest) ManagementResponse {
+	files, errList := a.listAuthFiles()
 	if errList != nil {
-		return viewDetailedError(access, http.StatusBadGateway, "host_unavailable", errList)
+		return jsonMessageError(http.StatusBadGateway, "host_unavailable", messages.FromError(errList))
 	}
-	return viewJSON(access, http.StatusOK, authFileListResponse{Files: files})
+	return JSONResponse(http.StatusOK, authFileListResponse{Files: files})
 }
 
-func (a *App) authQuota(req ManagementRequest, access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return apiKeyUnauthorized()
-	}
-	selected, failure := a.resolveQuotaAuthFile(req, access)
+func (a *App) adminAuthQuota(req ManagementRequest) ManagementResponse {
+	selected, failure := a.resolveQuotaAuthFile(req)
 	if selected == nil {
 		return failure
 	}
 	result, errQuota := a.fetchAuthQuota(req.HostCallbackID, *selected, authCategory(selected.Type))
 	if errQuota != nil {
-		return viewDetailedError(access, http.StatusBadGateway, "quota_failed", errQuota)
+		return jsonMessageError(http.StatusBadGateway, "quota_failed", messages.FromError(errQuota))
 	}
-	return viewJSON(access, http.StatusOK, result)
+	return JSONResponse(http.StatusOK, result)
 }
 
-// Resource routes are GET-only. Require a reset ID header and preserve it on retries.
-func (a *App) authQuotaReset(req ManagementRequest, access viewAccess) ManagementResponse {
-	if access.APIKey && !access.Tracked {
-		return apiKeyUnauthorized()
-	}
-	if access.APIKey && !a.store.AllowAPIKeyQuotaReset() {
-		return viewJSONError(access, http.StatusForbidden, "forbidden", "Quota resets are disabled for API key users")
-	}
+// The reset is POST-only. Require a reset ID header and preserve it on retries.
+func (a *App) adminAuthQuotaReset(req ManagementRequest) ManagementResponse {
 	resetID := req.Headers.Get("X-Quota-Reset-ID")
 	if !quotaResetIDPattern.MatchString(resetID) {
-		return viewJSONError(access, http.StatusBadRequest, "invalid", "Invalid quota reset request ID")
+		return JSONError(http.StatusBadRequest, "invalid", "Invalid quota reset request ID")
 	}
-	selected, failure := a.resolveQuotaAuthFile(req, access)
+	selected, failure := a.resolveQuotaAuthFile(req)
 	if selected == nil {
 		return failure
 	}
 	if authCategory(selected.Type) != "codex" {
-		return viewJSONError(access, http.StatusUnprocessableEntity, "unsupported", "Quota resets are not supported for this auth file type")
+		return JSONError(http.StatusUnprocessableEntity, "unsupported", "Quota resets are not supported for this auth file type")
 	}
 	name := selected.Name
-	if access.APIKey && access.MaskEmails {
-		name = maskEmails(name)
-	}
 	if !req.Query.Has("auth_revision") || req.Query.Get("auth_revision") != authFileRevision(*selected) || req.Query.Get("auth_name") != name {
-		return viewJSONError(access, http.StatusConflict, "auth_file_changed", "Auth file changed; refresh the auth file list and try again")
+		return JSONError(http.StatusConflict, "auth_file_changed", "Auth file changed; refresh the auth file list and try again")
 	}
 	if errReset := a.resetCodexQuota(req.HostCallbackID, *selected, resetID); errReset != nil {
-		return viewDetailedError(access, http.StatusBadGateway, "reset_failed", errReset)
+		return jsonMessageError(http.StatusBadGateway, "reset_failed", messages.FromError(errReset))
 	}
 	// Refresh separately so a failed query cannot obscure a successful reset.
-	return viewJSON(access, http.StatusOK, map[string]bool{"reset": true})
+	return JSONResponse(http.StatusOK, map[string]bool{"reset": true})
 }
 
-func (a *App) resolveQuotaAuthFile(req ManagementRequest, access viewAccess) (*hostAuthFile, ManagementResponse) {
+func (a *App) resolveQuotaAuthFile(req ManagementRequest) (*hostAuthFile, ManagementResponse) {
 	authIndex := strings.TrimSpace(req.Query.Get("auth_index"))
 	if authIndex == "" || len(authIndex) > 512 {
-		return nil, viewJSONError(access, http.StatusBadRequest, "invalid", "Invalid auth file identifier")
+		return nil, JSONError(http.StatusBadRequest, "invalid", "Invalid auth file identifier")
 	}
 	files, errList := a.listHostAuthFiles()
 	if errList != nil {
-		return nil, viewDetailedError(access, http.StatusBadGateway, "host_unavailable", errList)
+		return nil, jsonMessageError(http.StatusBadGateway, "host_unavailable", messages.FromError(errList))
 	}
 	var selected *hostAuthFile
 	for i := range files {
@@ -187,47 +173,27 @@ func (a *App) resolveQuotaAuthFile(req ManagementRequest, access viewAccess) (*h
 		}
 	}
 	if selected == nil {
-		return nil, viewJSONError(access, http.StatusNotFound, "not_found", "Auth file does not exist")
+		return nil, JSONError(http.StatusNotFound, "not_found", "Auth file does not exist")
 	}
 	if strings.EqualFold(strings.TrimSpace(selected.AccountType), "api_key") {
-		return nil, viewJSONError(access, http.StatusNotFound, "not_found", "Auth file does not exist")
-	}
-	if access.APIKey {
-		decision := a.store.ResolveRouting(access.Scope, "", "")
-		if decision.ConfigurationError != "" || (decision.RestrictsCredentials() && !routingAllowsAuthFile(*selected, decision)) {
-			return nil, viewJSONError(access, http.StatusNotFound, "not_found", "Auth file does not exist")
-		}
+		return nil, JSONError(http.StatusNotFound, "not_found", "Auth file does not exist")
 	}
 	if selected.Disabled {
-		return nil, viewJSONError(access, http.StatusUnprocessableEntity, "disabled", "Auth file is disabled")
+		return nil, JSONError(http.StatusUnprocessableEntity, "disabled", "Auth file is disabled")
 	}
 	if authCategoryOrder(authCategory(selected.Type)) == 5 {
-		return nil, viewJSONError(access, http.StatusUnprocessableEntity, "unsupported", "Quota queries are not supported for this auth file type")
+		return nil, JSONError(http.StatusUnprocessableEntity, "unsupported", "Quota queries are not supported for this auth file type")
 	}
 	if selected.RuntimeOnly {
-		return nil, viewJSONError(access, http.StatusUnprocessableEntity, "unsupported", "Runtime-only auth files have no readable credentials")
+		return nil, JSONError(http.StatusUnprocessableEntity, "unsupported", "Runtime-only auth files have no readable credentials")
 	}
 	return selected, ManagementResponse{}
 }
 
-func (a *App) listAuthFiles(access viewAccess) ([]authFileView, error) {
+func (a *App) listAuthFiles() ([]authFileView, error) {
 	files, errList := a.listHostAuthFiles()
 	if errList != nil {
 		return nil, errList
-	}
-	if access.APIKey {
-		decision := a.store.ResolveRouting(access.Scope, "", "")
-		if decision.ConfigurationError != "" {
-			files = nil
-		} else if decision.RestrictsCredentials() {
-			filtered := files[:0]
-			for _, file := range files {
-				if routingAllowsAuthFile(file, decision) {
-					filtered = append(filtered, file)
-				}
-			}
-			files = filtered
-		}
 	}
 	views := make([]authFileView, 0, len(files))
 	for _, file := range files {
