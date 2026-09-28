@@ -10,9 +10,14 @@ import (
 	"unicode"
 
 	"cpa-key-billing/internal/billing"
+	"cpa-key-billing/internal/uibuild"
 )
 
 func TestUIIncludesBothLanguagesWithoutExternalTranslationResources(t *testing.T) {
+	uiHTML, err := uibuild.Build(".")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, want := range []string{`<html lang="en">`, "const BILLING_MESSAGES =", "billing-language-change", `data-page-action`} {
 		if !bytes.Contains(uiHTML, []byte(want)) {
 			t.Fatalf("missing %q", want)

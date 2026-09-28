@@ -1,45 +1,11 @@
 package plugin
 
-import (
-	"bytes"
-	"embed"
-	"encoding/base64"
-	"encoding/json"
-)
+import "encoding/base64"
 
-//go:embed ui.html i18n.js locales/*.json
-var uiFiles embed.FS
-
-// Assemble once. The browser receives one self-contained HTML resource.
-var uiHTML = buildUI()
-
+// pluginLogo is the inline data URI used by plugin registration. The standalone
+// admin UI is assembled by cmd/build-ui and is no longer embedded in or served
+// by the plugin runtime.
 var pluginLogo = "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(pluginIconSVG))
-
-func buildUI() []byte {
-	read := func(name string) []byte {
-		data, err := uiFiles.ReadFile(name)
-		if err != nil {
-			panic(err)
-		}
-		return data
-	}
-	catalogs := map[string]map[string]string{}
-	for _, language := range []string{"en", "zh-CN"} {
-		var entries map[string]string
-		if err := json.Unmarshal(read("locales/"+language+".json"), &entries); err != nil {
-			panic(err)
-		}
-		catalogs[language] = entries
-	}
-	data, err := json.Marshal(catalogs)
-	if err != nil {
-		panic(err)
-	}
-	script := append([]byte("const BILLING_MESSAGES = "), data...)
-	script = append(script, ';', '\n')
-	script = append(script, read("i18n.js")...)
-	return bytes.Replace(read("ui.html"), []byte("// BILLING_I18N"), script, 1)
-}
 
 // The inline SVG keeps the plugin logo independent of external image files.
 const pluginIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="24.57 25.47 461.94 459.4" fill="#72787c">
