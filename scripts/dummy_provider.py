@@ -40,6 +40,10 @@ TOKEN_INTERVAL_SECONDS = 1 / 200
 JITTER_RATIO = 0.1
 HOLD_PROMPT = "E2E HOLD CONCURRENCY SLOT"
 HOLD_SECONDS = 2.0
+# A request carrying this marker fails upstream, which lets the E2E suite tell a
+# managed failure (recorded as an error event) from an unmanaged passthrough.
+ERROR_PROMPT = "E2E UPSTREAM ERROR"
+ERROR_STATUS = 500
 
 PATHS = {
     "/v1/chat/completions": "chat",
@@ -138,6 +142,13 @@ class DummyProviderHandler(BaseHTTPRequestHandler):
         # Keep the E2E request in flight long enough to challenge its slot.
         if HOLD_PROMPT in json.dumps(body, ensure_ascii=False):
             self.pause(HOLD_SECONDS)
+
+        # A marked request fails the way an upstream outage would, so the suite
+        # can assert that managed traffic records an error and unmanaged traffic
+        # only passes the failure through.
+        if ERROR_PROMPT in json.dumps(body, ensure_ascii=False):
+            self.send_error_body(ERROR_STATUS, "E2E simulated upstream failure")
+            return
 
         turn = Turn(model)
         if not stream:

@@ -255,12 +255,108 @@ management_call() {
     "http://127.0.0.1:$port$path"
 }
 
-account_call() {
+downstream_call() {
   local port="$1"
   local path="$2"
   curl -fsS --max-time 30 \
     -H "Authorization: Bearer e2e-downstream-key" \
     "http://127.0.0.1:$port$path"
+}
+
+# Every former /v0/resource/plugins/cpa-key-billing path must be gone. CPA's
+# NoRoute handler answers 404 whether or not a credential is supplied, because
+# this fork registers zero Resource routes.
+assert_resource_routes_gone() {
+  local port="$1"
+  local phase_label="$2"
+  local path http_status auth
+  local -a resource_paths=(
+    "/v0/resource/plugins/cpa-key-billing/ui"
+    "/v0/resource/plugins/cpa-key-billing/profile"
+    "/v0/resource/plugins/cpa-key-billing/subscription"
+    "/v0/resource/plugins/cpa-key-billing/routing"
+    "/v0/resource/plugins/cpa-key-billing/prices"
+    "/v0/resource/plugins/cpa-key-billing/analysis"
+    "/v0/resource/plugins/cpa-key-billing/events"
+    "/v0/resource/plugins/cpa-key-billing/errors"
+    "/v0/resource/plugins/cpa-key-billing/auth-files"
+    "/v0/resource/plugins/cpa-key-billing/auth-files/quota"
+    "/v0/resource/plugins/cpa-key-billing/auth-files/quota/reset"
+  )
+
+  for path in "${resource_paths[@]}"; do
+    for auth in none downstream management; do
+      case "$auth" in
+        none)
+          http_status="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port$path")"
+          ;;
+        downstream)
+          http_status="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer e2e-downstream-key" "http://127.0.0.1:$port$path")"
+          ;;
+        management)
+          http_status="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer e2e-management-key" "http://127.0.0.1:$port$path")"
+          ;;
+      esac
+      if [[ "$http_status" != "404" ]]; then
+        echo "${phase_label}：Resource 路径 ${path}（${auth}）返回 HTTP ${http_status}，预期 404。" >&2
+        return 1
+      fi
+    done
+  done
+}
+
+# Both a successful and an error Management response must be uncacheable and
+# non-sniffable. They are read from CPA's HTTP server, not a direct handler.
+assert_no_store_headers() {
+  local headers_file="$1"
+  if ! grep -iqE '^cache-control:[[:space:]]*private, no-store' "$headers_file"; then
+    echo "管理响应缺少 Cache-Control: private, no-store。" >&2
+    return 1
+  fi
+  if ! grep -iqE '^pragma:[[:space:]]*no-cache' "$headers_file"; then
+    echo "管理响应缺少 Pragma: no-cache。" >&2
+    return 1
+  fi
+  if ! grep -iqE '^referrer-policy:[[:space:]]*no-referrer' "$headers_file"; then
+    echo "管理响应缺少 Referrer-Policy: no-referrer。" >&2
+    return 1
+  fi
+  if ! grep -iqE '^x-content-type-options:[[:space:]]*nosniff' "$headers_file"; then
+    echo "管理响应缺少 X-Content-Type-Options: nosniff。" >&2
+    return 1
+  fi
+}
+
+assert_management_headers() {
+  local port="$1"
+  local runtime_dir="$2"
+  local headers_file="$runtime_dir/management-headers.txt"
+  local http_status
+
+  http_status="$(curl -sS --max-time 30 \
+    -H "Authorization: Bearer e2e-management-key" \
+    --dump-header "$headers_file" --output /dev/null --write-out '%{http_code}' \
+    "http://127.0.0.1:$port/v0/management/plugins/cpa-key-billing/keys")"
+  if [[ "$http_status" != "200" ]]; then
+    echo "管理成功响应返回 HTTP ${http_status}。" >&2
+    return 1
+  fi
+  assert_no_store_headers "$headers_file" || return 1
+
+  http_status="$(curl -sS --max-time 30 \
+    -X POST \
+    -H "Authorization: Bearer e2e-management-key" \
+    -H "Content-Type: application/json" \
+    --data '{"scope":"","plan_id":""}' \
+    --dump-header "$headers_file" --output /dev/null --write-out '%{http_code}' \
+    "http://127.0.0.1:$port/v0/management/plugins/cpa-key-billing/keys/bind")"
+  if [[ "$http_status" != "400" ]]; then
+    echo "管理错误响应返回 HTTP ${http_status}，预期 400。" >&2
+    return 1
+  fi
+  assert_no_store_headers "$headers_file" || return 1
 }
 
 protocol_label() {
@@ -680,11 +776,6 @@ assert_route_blacklist_policy() {
       return 1
     fi
   done
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/routing" >"$runtime_dir/blacklist-account.json"
-  if ! jq -e '.models == ["gpt-5.6-sol"] and .denied_models == ["gpt-5.6-sol"] and .routing_valid == true' "$runtime_dir/blacklist-account.json" >/dev/null; then
-    echo "账户权限没有保留黑白名单冲突语义。" >&2
-    return 1
-  fi
   management_call GET "$port" "/v0/management/plugins/cpa-key-billing/events?limit=100" >"$events_file"
   if [[ "$(jq -er '.entries | length' "$events_file")" != "$((expected_count + 2))" ]]; then
     echo "黑名单拦截进入了计费用量。" >&2
@@ -1150,6 +1241,127 @@ assert_reference_price_billing() {
   log_step "参考价已验证：普通模型及带前缀、思考后缀的模型，流式和非流式均按参考价记账"
 }
 
+# Phase 1: the key is synchronized without a plan binding. Plan binding is the
+# only activation marker, so every request must reach CPA's native execution
+# path and the plugin must record nothing at all.
+assert_unmanaged_phase() {
+  local port="$1"
+  local runtime_dir="$2"
+  local body http_status priced_scope
+  local keys_file="$runtime_dir/unmanaged-keys.json"
+  local events_file="$runtime_dir/unmanaged-events.json"
+  local errors_file="$runtime_dir/unmanaged-errors.json"
+
+  log_step "阶段一：同步 API Key 且不绑定任何订阅计划"
+  management_call POST "$port" "/v0/management/plugins/cpa-key-billing/keys/sync" \
+    -H "Content-Type: application/json" \
+    --data '{"keys":["e2e-downstream-key"]}' >/dev/null
+
+  management_call GET "$port" "/v0/management/plugins/cpa-key-billing/keys" >"$keys_file"
+  if ! jq -e '
+      first(.keys[] | select(.in_config)) |
+      .status == "unmanaged" and .plan_id == null and
+      (.windows | length) == 0 and (.blocked | not) and (.unlimited == true)
+    ' "$keys_file" >/dev/null; then
+    echo "未绑定计划的 API Key 未显示为未受管且无额度：$(jq -c '.keys' "$keys_file")" >&2
+    return 1
+  fi
+  priced_scope="$(jq -er 'first(.keys[] | select(.in_config)).scope' "$keys_file")"
+  # The scope is a hash; retrieve it in the managed phase through this file.
+  printf '%s' "$priced_scope" >"$runtime_dir/unmanaged-scope.txt"
+
+  # One model has a custom price, one has no price at all. Both pass through.
+  management_call PUT "$port" "/v0/management/plugins/cpa-key-billing/prices" \
+    -H "Content-Type: application/json" \
+    --data '{"model_id":"gpt-5.6-sol","input_per_1m":1,"output_per_1m":2,"cache_read_per_1m":0.1,"cache_write_per_1m":1.25}' \
+    >/dev/null
+
+  body="$(request_body chat "gpt-5.6-sol" false "Reply with exactly OK.")"
+  api_call "$port" "阶段一：已定价模型成功" "/v1/chat/completions" "$body" chat "$runtime_dir/responses/unmanaged-priced.json"
+  body="$(request_body chat "e2e-chat-to-chat-nonstream" false "Reply with exactly OK.")"
+  api_call "$port" "阶段一：未定价模型成功" "/v1/chat/completions" "$body" chat "$runtime_dir/responses/unmanaged-unpriced.json"
+
+  # A failed upstream request is passed through to the client unchanged.
+  body="$(request_body chat "gpt-5.6-sol" false "E2E UPSTREAM ERROR")"
+  http_status="$(curl -sS --max-time 30 \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer e2e-downstream-key" \
+    --data "$body" --output "$runtime_dir/responses/unmanaged-failed.json" --write-out '%{http_code}' \
+    "http://127.0.0.1:$port/v1/chat/completions")"
+  if [[ "$http_status" == 2* ]]; then
+    echo "阶段一：上游失败请求返回 HTTP ${http_status}，预期透传错误。" >&2
+    return 1
+  fi
+
+  # Native credential selection ran: the dummy upstream's fixed answer is present.
+  if ! grep -q "dummy provider for CLIProxyAPI" "$runtime_dir/responses/unmanaged-priced.json"; then
+    echo "阶段一：已定价请求没有到达 dummy 上游。" >&2
+    return 1
+  fi
+  if ! grep -q "dummy provider for CLIProxyAPI" "$runtime_dir/responses/unmanaged-unpriced.json"; then
+    echo "阶段一：未定价请求没有到达 dummy 上游。" >&2
+    return 1
+  fi
+
+  sleep "$usage_settle_seconds"
+  management_call GET "$port" "/v0/management/plugins/cpa-key-billing/events?limit=100" >"$events_file"
+  if [[ "$(jq -er '.entries | length' "$events_file")" != "0" ]]; then
+    echo "阶段一：未受管请求产生了请求事件：$(jq -c '.entries' "$events_file")" >&2
+    return 1
+  fi
+  management_call GET "$port" "/v0/management/plugins/cpa-key-billing/errors?limit=100" >"$errors_file"
+  if [[ "$(jq -er '.entries | length' "$errors_file")" != "0" ]]; then
+    echo "阶段一：未受管请求产生了错误事件：$(jq -c '.entries' "$errors_file")" >&2
+    return 1
+  fi
+  log_step "阶段一：零请求事件、零错误事件、无额度状态，且由 CPA 原生选证完成上游请求"
+}
+
+# Phase 2: a managed failed request must appear as an error event with the
+# upstream failure details.
+assert_managed_error_event() {
+  local port="$1"
+  local runtime_dir="$2"
+  local body http_status attempt before after
+  local errors_file="$runtime_dir/managed-errors.json"
+  local response_file="$runtime_dir/responses/managed-failed.json"
+
+  management_call GET "$port" "/v0/management/plugins/cpa-key-billing/errors?limit=100" >"$errors_file"
+  before="$(jq -er '.entries | length' "$errors_file")"
+
+  body="$(request_body chat "gpt-5.6-sol" false "E2E UPSTREAM ERROR")"
+  http_status="$(curl -sS --max-time 30 \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer e2e-downstream-key" \
+    --data "$body" --output "$response_file" --write-out '%{http_code}' \
+    "http://127.0.0.1:$port/v1/chat/completions")"
+  if [[ "$http_status" == 2* ]]; then
+    echo "受管失败请求返回 HTTP ${http_status}，预期上游错误。" >&2
+    return 1
+  fi
+
+  after="$before"
+  for ((attempt = 0; attempt < 50; attempt++)); do
+    management_call GET "$port" "/v0/management/plugins/cpa-key-billing/errors?limit=100" >"$errors_file"
+    after="$(jq -er '.entries | length' "$errors_file")"
+    if (( after >= before + 1 )); then
+      break
+    fi
+    sleep 0.1
+  done
+  if (( after < before + 1 )); then
+    echo "受管失败请求的错误事件数量为 ${after}，预期至少 $((before + 1))。" >&2
+    return 1
+  fi
+  if ! jq -e '
+      first(.entries[] | select(.billing_model == "gpt-5.6-sol")) |
+      (.status_code // 0) >= 400 and (.body | contains("dummy provider"))
+    ' "$errors_file" >/dev/null; then
+    echo "受管失败请求的错误事件内容不正确：$(jq -c '.entries[0]' "$errors_file")" >&2
+    return 1
+  fi
+}
+
 run_target() {
   local target="$1"
   local index="$2"
@@ -1157,7 +1369,7 @@ run_target() {
   local target_dir="$run_dir/target-$index"
   local host_dir="$target_dir/host"
   local runtime_dir="$target_dir/runtime"
-  local api_key_json plugins_file prompt account_access_file account_prices_file account_events_file
+  local api_key_json plugins_file prompt plan_scope high_limit_plan
   local client upstream stream endpoint body mode extension response_file request_events_file
   local client_label upstream_label mode_label request_number requested_model billing_model upstream_models model_id
   local model_case case_name actual_upstream_model expected_source expected_uncached expected_cache_write
@@ -1210,8 +1422,22 @@ run_target() {
   fi
   log_step "插件已注册并启用"
 
+  # Phase 1: the key is unmanaged and must bypass the plugin entirely.
+  assert_unmanaged_phase "$port" "$runtime_dir"
+  assert_resource_routes_gone "$port" "阶段一"
+  log_step "阶段一：所有旧 Resource 路径均返回 404"
+
+  # Phase 2: bind a high-limit plan so the same key becomes managed.
+  plan_scope="$(cat "$runtime_dir/unmanaged-scope.txt")"
+  management_call POST "$port" "/v0/management/plugins/cpa-key-billing/plans" \
+    -H "Content-Type: application/json" \
+    --data "$(jq -nc --arg name "e2e-高额度计划" --arg scope "$plan_scope" \
+      '{name: $name, windows: [{name: "Long", period_seconds: 86400, amount_usd: 1000000, request_limit: 1000000, token_limit: 1000000000}], scopes: [$scope]}')" \
+    >"$runtime_dir/managed-plan.json"
+  high_limit_plan="$(jq -er '.plan.id' "$runtime_dir/managed-plan.json")"
+  log_step "阶段二：已创建并绑定高额度订阅计划"
   assert_headless_price_admission "$port" "$runtime_dir"
-  account_call "$port" "/v1/models" >"$runtime_dir/models.json"
+  downstream_call "$port" "/v1/models" >"$runtime_dir/models.json"
   jq -er '.data[].id' "$runtime_dir/models.json" >"$runtime_dir/model-ids.txt"
   while IFS= read -r model_id; do
     jq -n --arg model "$model_id" '{model_id:$model,input_per_1m:1,output_per_1m:2,cache_read_per_1m:0.1,cache_write_per_1m:1.25}' >"$runtime_dir/model-price.json"
@@ -1433,33 +1659,10 @@ run_target() {
     echo "CLIProxyAPI ${host_label} 请求事件数量为 ${actual_requests}，预期 ${expected_requests}。" >&2
     return 1
   fi
-  account_access_file="$runtime_dir/account-access.json"
-  account_prices_file="$runtime_dir/account-prices.json"
-  account_events_file="$runtime_dir/account-events.json"
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/profile" >"$account_access_file"
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/subscription" >"$runtime_dir/account-subscription.json"
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/routing" >"$runtime_dir/account-routing.json"
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/prices?model=gpt-5.6-sol" >"$account_prices_file"
-  account_call "$port" "/v0/resource/plugins/cpa-key-billing/events?limit=100" >"$account_events_file"
-  if ! jq -e '
-      .tracked == true and
-      has("identity") and (has("subscription") | not) and (has("credentials") | not) and
-      (has("keys") | not) and (has("plans") | not) and (has("prices") | not) and
-      (has("routing") | not) and (has("bindings") | not)
-    ' "$account_access_file" >/dev/null ||
-    ! jq -e 'has("subscription") and has("concurrency") and (has("credentials") | not)' "$runtime_dir/account-subscription.json" >/dev/null ||
-    ! jq -e '(.models | length) == 0 and (.credentials | length) == 0 and .routing_valid == true and (.warnings | length) == 0' "$runtime_dir/account-routing.json" >/dev/null ||
-    ! jq -e 'length > 0 and all(.[]; has("model_id") and has("source") and (has("operation") | not))' \
-      "$account_prices_file" >/dev/null ||
-    ! jq -e --argjson expected "$expected_requests" '
-      .total == $expected and (.entries | length) == $expected and
-      all(.entries[]; .scope == "" and (has("auth_index") | not) and has("cost")) and
-      any(.entries[]; has("executor_type")) and any(.entries[]; has("source"))
-    ' "$account_events_file" >/dev/null; then
-    echo "CLIProxyAPI ${host_label} 的 API Key 自助查询范围或响应字段不正确。" >&2
-    return 1
-  fi
-  log_step "API Key 自助查询已验证：仅返回当前 Key 的 35 条请求事件"
+  # The account portal is gone. Every former Resource path must 404 for
+  # anonymous, downstream, and management credentials alike.
+  assert_resource_routes_gone "$port" "阶段二"
+  log_step "阶段二：所有旧 Resource 路径均返回 404"
   management_call GET "$port" "/v0/management/plugins/cpa-key-billing/analysis" >"$runtime_dir/analysis.json"
   if ! jq -e '
       .usage_distribution.models as $models |
@@ -1475,6 +1678,13 @@ run_target() {
   fi
   log_step "聚合统计已验证：35 条基础计费记录"
 
+  assert_management_headers "$port" "$runtime_dir"
+  log_step "管理成功与错误响应的 no-store 安全响应头已验证"
+  assert_managed_error_event "$port" "$runtime_dir"
+  management_call GET "$port" "/v0/management/plugins/cpa-key-billing/events?limit=100" >"$runtime_dir/request-events.json"
+  expected_requests="$(jq -er '.entries | length' "$runtime_dir/request-events.json")"
+  log_step "受管失败请求已记录错误事件（当前 ${expected_requests} 条请求事件）"
+
   log_step "并发限制：SSE 占槽、HTTP 拦截与完成释放"
   assert_concurrency_limit "$port" "$runtime_dir" "$expected_requests"
   expected_requests=$((expected_requests + 1))
@@ -1487,11 +1697,22 @@ run_target() {
   log_step "黑名单：类别排除、单凭证例外、跨规则优先级、全部排除及推理后缀"
   assert_route_blacklist_policy "$port" "$runtime_dir" "$expected_requests"
   expected_requests=$((expected_requests + 2))
+  # Each quota case creates its own plan with bindings, which requires the key
+  # to be unbound; the high-limit binding is restored after the loop.
+  management_call POST "$port" "/v0/management/plugins/cpa-key-billing/keys/unbind" \
+    -H "Content-Type: application/json" \
+    --data "$(jq -nc --arg scope "$plan_scope" '{scope:$scope}')" >/dev/null
   for dimension in amount_usd requests tokens; do
     log_step "订阅额度 ${dimension}：消费、4 种协议拦截与恢复"
     assert_quota_exhausted "$port" "$runtime_dir" "$expected_requests" "$dimension"
     expected_requests=$((expected_requests + 2))
   done
+  # Each quota case unbinds the key when it deletes its temporary plan. Restore
+  # the high-limit binding so the reference-price checks stay managed.
+  management_call POST "$port" "/v0/management/plugins/cpa-key-billing/keys/bind" \
+    -H "Content-Type: application/json" \
+    --data "$(jq -nc --arg scope "$plan_scope" --arg plan "$high_limit_plan" '{scope:$scope, plan_id:$plan}')" \
+    >/dev/null
 
   management_call GET "$port" "/v0/management/plugins/cpa-key-billing/plugin-logs" >"$runtime_dir/plugin-logs.json"
   if ! jq -e '[.entries[] | select(.level == "info" and (.message | contains("Loaded billing database")))] | length == 1' \
@@ -1505,7 +1726,7 @@ run_target() {
   kill "$active_pid" >/dev/null 2>&1 || true
   wait "$active_pid" >/dev/null 2>&1 || true
   active_pid=""
-  log_ok "${host_label}：51 个上游请求（含 4 个参考价请求），1 次并发拦截，6 次模型拦截，4 次凭证路由，2 次凭证拦截，12 次额度拦截"
+  log_ok "${host_label}：阶段一 3 次上游请求全部旁路；阶段二 ${expected_requests} 条请求事件（含 1 条失败错误事件）与 4 个参考价请求，1 次并发拦截，6 次模型拦截，4 次凭证路由，2 次凭证拦截，12 次额度拦截"
 }
 
 log_stage "启动 dummy provider"

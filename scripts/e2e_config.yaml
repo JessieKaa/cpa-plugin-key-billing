@@ -25,6 +25,11 @@ plugins:
 # Keep the prefixed and bare model routes on distinct upstreams.
 force-model-prefix: true
 
+# The suite deliberately makes one upstream request fail. Cooldown scheduling is
+# disabled so that failure cannot make a later, unrelated assertion see a
+# temporarily unavailable credential.
+disable-cooling: true
+
 # The OpenAI-shaped executors append their endpoint to a /v1 base URL, while the
 # Claude and Gemini ones build their whole path from the origin.
 openai-compatibility:
