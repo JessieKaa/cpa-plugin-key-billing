@@ -75,8 +75,14 @@ func (d *DB) loadKeys(state *billing.State) error {
 			&cyclesJSON, &bindingsJSON); errScan != nil {
 			return fmt.Errorf("Read API key list: %w", errScan)
 		}
-		if strings.TrimSpace(scope) == "" || strings.TrimSpace(key.Preview) == "" {
-			return fmt.Errorf("API key identifier and masked preview are required")
+		// A blank, non-canonical, or duplicate scope would be addressed by its
+		// normalized form at request time and would bypass enforcement, so corrupt
+		// state fails loading instead of degrading a managed key to unmanaged.
+		if scope == "" || billing.NormalizeScope(scope) != scope {
+			return fmt.Errorf("API key scope %q is not canonical", scope)
+		}
+		if _, exists := state.Keys[scope]; exists {
+			return fmt.Errorf("API key scope %q appears more than once", scope)
 		}
 		key.DeletedAt = timeAt(deletedAt)
 		if err := json.Unmarshal([]byte(cyclesJSON), &key.Cycles); err != nil {

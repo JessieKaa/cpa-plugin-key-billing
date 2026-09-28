@@ -322,6 +322,14 @@ func (s *Store) SyncKeys(keys []string, allowEmpty bool) (SyncResult, error) {
 	})
 }
 
+// NormalizeScope returns the canonical caller scope that every key lookup and
+// storage key uses. Persisted scopes must already be canonical: a stored key
+// that normalizes to something else would not be found by a request callback
+// and would silently become an unmanaged pass-through.
+func NormalizeScope(scope string) string {
+	return normalizeScope(scope)
+}
+
 // Scopes are hex digests, so case folding is safe for hand-typed input.
 func normalizeScope(scope string) string {
 	return strings.ToLower(strings.TrimSpace(scope))

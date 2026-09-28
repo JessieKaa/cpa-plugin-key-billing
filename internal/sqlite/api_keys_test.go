@@ -73,6 +73,48 @@ func TestForkAndUpstreamShareSchemaVersion17(t *testing.T) {
 	}
 }
 
+// A stored scope that is not already canonical would be addressed by its
+// normalized form at request time, so loading fails instead of turning a bound
+// key into an unmanaged pass-through.
+func TestLoadingRejectsNonCanonicalScope(t *testing.T) {
+	database := openTestDB(t)
+	if _, err := database.db.Exec(insertKey, "UPPERCASE-SCOPE", "sk-tes…0001", "", true, 0, "", 0, `{}`, `{}`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Load(time.Time{}, time.Time{}); err == nil || !strings.Contains(err.Error(), "not canonical") {
+		t.Fatalf("load error = %v, want a non-canonical scope failure", err)
+	}
+}
+
+// Malformed plan data prevents plugin state from loading.
+func TestLoadingRejectsMalformedPlanJSON(t *testing.T) {
+	database := openTestDB(t)
+	if _, err := database.db.Exec(`INSERT INTO plans (position, id, name, windows_json)
+		VALUES (0, 'p', 'P', 'not-json')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Load(time.Time{}, time.Time{}); err == nil || !strings.Contains(err.Error(), "subscription plan") {
+		t.Fatalf("load error = %v, want a malformed plan failure", err)
+	}
+}
+
+// A persisted quota cycle that no longer matches its plan window prevents
+// plugin state from loading.
+func TestLoadingRejectsInvalidQuotaCycle(t *testing.T) {
+	database := openTestDB(t)
+	if _, err := database.db.Exec(`INSERT INTO plans (position, id, name, windows_json)
+		VALUES (0, 'p', 'P', '[{"id":"w","name":"额度","period_seconds":3600,"amount_usd":10}]')`); err != nil {
+		t.Fatal(err)
+	}
+	cycles := `{"missing":{"plan_id":"p","start_at":"2026-09-08T12:00:00Z","end_at":"2026-09-08T13:00:00Z","spent_usd":0}}`
+	if _, err := database.db.Exec(insertKey, "dummy-scope", "sk-dum…0001", "", true, 0, "p", 0, cycles, `{}`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Load(time.Time{}, time.Time{}); err == nil || !strings.Contains(err.Error(), "Invalid quota cycle") {
+		t.Fatalf("load error = %v, want an invalid cycle failure", err)
+	}
+}
+
 // A key bound to a missing plan fails loading instead of being silently
 // unbound: corrupt state stays a configuration error.
 func TestLoadingFailsWhenABoundPlanRowIsMissing(t *testing.T) {
