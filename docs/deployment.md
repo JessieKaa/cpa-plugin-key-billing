@@ -3,26 +3,31 @@
 本分支与上游 `haowang02/cpa-plugin-key-billing` 的两个行为差异决定了部署方式：
 
 1. **未绑定订阅计划的下游 API key 是非托管 key**：计费插件完全绕过，模型、价格、并发、配额与记账均不适用，请求直接走 CLIProxyAPI 原生路径。
-2. **插件注册零 Resource 路由**：管理界面是独立发布的单文件 UI，由 Nginx 在管理员专属路径下直接提供；所有动态操作都在 CPA Management key 认证之下。
+2. **插件注册零 Resource 路由**：管理界面是独立发布的单文件 UI，由 Nginx 在管理员专属路径下直接提供；所有管理写操作都在 CPA Management key 认证之下。唯一的例外是模型目录发现：UI 通过 `/v1/models` 读取模型列表，该接口属于下游客户端接口，需要 `api-keys` 中的任意一个 key。这要求管理员浏览器能够访问客户端接口，且该 key 会出现在浏览器请求中。
 
 ## 1. 部署前预检
 
 ```bash
 scripts/preflight_deployment.sh <CPA 生效配置 config.yaml> \
-  [--log-file <CPA 启动日志>] [--process <CPA 进程匹配模式>]
+  [--log-file <CPA 启动日志>] [--process <CPA 进程匹配模式>] \
+  [--allow-plugin <插件ID>]... [--home-disabled]
 ```
 
 预检会在以下情况失败：
 
 - `plugins.enabled` 不为 `true`（动态插件加载被关闭）；
 - `plugins.configs.cpa-key-billing.enabled` 不为 `true`（本插件实例被停用或缺失）；
-- 运行中的 CPA 检测到 Home 模式（`-home-jwt` 或 `HOME_JWT`）。
+- 检测到 Home 模式：启动日志出现 `Home mode`、预检自身环境存在 `HOME_JWT`、或 CPA 进程带 `-home-jwt`/`HOME_JWT`；
+- 无法确认 Home 模式已关闭且未传入 `--home-disabled`；
+- 存在其他已启用的插件实例，且未用 `--allow-plugin <id>` 逐个确认。
 
-预检会在以下情况警告，需要人工确认：
+预检会在以下情况警告：
 
-- 存在其他已启用的插件实例（CLIProxyAPI 只采用一个调度器插件，竞争调度器会使本插件的凭据路由限制失效）；
-- CPA 未运行、无法从进程确认 Home 模式；
+- 其他插件实例已通过 `--allow-plugin` 确认（CLIProxyAPI 只采用一个调度器插件，仍需人工确认其不注册调度器）；
+- 已按 `--home-disabled` 声明 Home 关闭、但无法从进程或日志独立验证；
 - 状态数据库尚不存在（首次启动会创建）。
+
+`--home-disabled` 用于无法检查进程的受控重启窗口；它只是运维声明，不能推翻已经观察到的 Home 证据。非 Linux 环境没有 `/proc`，需要依赖 `--log-file` 或 `--home-disabled`。
 
 提供 `--log-file` 时，预检还会确认日志中存在本插件的注册记录，且没有插件 panic 或熔断记录。
 
@@ -106,7 +111,8 @@ chmod 0700 auths plugins
 ```
 
 - 不要把任何 auth 文件、状态数据库或配置放进版本控制或流出运维边界的备份；
-- Management key 只保存在浏览器内存中，UI 刷新或退出即清除，不进入 localStorage/sessionStorage/IndexedDB；
+- Management key 只保存在浏览器内存中，UI 刷新或退出即清除，不进入 localStorage/sessionStorage/IndexedDB；界面偏好使用固定命名空间，不含任何由 Management key 派生的取值；
+- 模型目录发现会使用 `api-keys` 中的第一个 key 请求 `/v1/models`，请把它视为管理端凭据并保持 TLS；
 - 管理响应带 `Cache-Control: private, no-store` 等响应头，Nginx 不应缓存 `/v0/management/` 路径。
 
 ## 7. 已知限制（运维视角）

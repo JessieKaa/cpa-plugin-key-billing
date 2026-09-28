@@ -21,6 +21,8 @@
 
 ## How it works
 
+An API key without a subscription-plan binding is unmanaged: the plugin bypasses it entirely, so model, price, concurrency, quota, and accounting rules do not apply and the request follows CLIProxyAPI's native path. The flow below describes keys with a plan binding.
+
 Before a request reaches an upstream provider, the plugin checks subscription quotas, concurrency, and routing. After execution, CLIProxyAPI supplies usage through `usage.handle`. The plugin uses that record to store the request event, calculate its cost, and update spending for the current quota window.
 
 ```mermaid
@@ -89,8 +91,8 @@ plugins:
       enabled: true
       debug: false # Include routing and reference-price matching in debug logs
       codex_fast_mode_billing: false # Charge 2.5× for Codex priority requests
-      mask_api_key_view_emails: false # Mask email addresses in API key account views
-      allow_api_key_quota_reset: false # Allow API key users to reset accessible Codex auth file quotas using upstream reset credits
+      mask_api_key_view_emails: false # Deprecated no-op kept for strict-decoding compatibility; the downstream account portal is gone
+      allow_api_key_quota_reset: false # Deprecated no-op kept for strict-decoding compatibility; the downstream account portal is gone
       state_file: "plugins/cpa-key-billing-state-v1.db"
 ```
 
@@ -100,25 +102,21 @@ plugins:
 > - Databases created by v1.0.0 or later are migrated automatically.
 > - JSON and SQLite files from v0.8.4 or earlier cannot be migrated. Point `state_file` to a new file instead.
 
-Restart CLIProxyAPI and open **API Key Billing** in the management panel. Review model pricing, create subscription plans, and bind the API keys whose quotas you want to enforce.
+Restart CLIProxyAPI, then create subscription plans and bind the API keys whose quotas you want to enforce. Keys without a binding are neither limited nor accounted.
 
 ## Access
 
-Administrators can open the plugin from the management panel or visit it directly:
+The plugin registers no `/v0/resource/plugins/...` route and has no downstream account page. The admin UI is a separately released, self-contained `cpa-key-billing-ui.html` served by Nginx under an admin-only path, and every management operation requires the CPA Management key:
 
 ```text
-http(s)://<CLIProxyAPI address>/v0/resource/plugins/cpa-key-billing/ui
+https://<admin host>/admin/cpa-key-billing
 ```
 
-API key holders can use their own key to view their subscription and usage:
-
-```text
-http(s)://<CLIProxyAPI address>/v0/resource/plugins/cpa-key-billing/ui#account
-```
+See [docs/deployment.md](docs/deployment.md) for the build, Nginx configuration, artifact checksums, and deployment steps. Model discovery uses the first configured key against `/v1/models`; that is the only non-Management request.
 
 ## Billing and quotas
 
-- Keys without a subscription plan still have their usage recorded, but have no subscription quota limit.
+- API keys without a subscription plan bypass the plugin entirely: no quota limit and no usage accounting.
 - A plan can contain multiple quota windows. Each window can limit spending in USD, tokens, requests, or any combination of the three.
 - Usage is tracked separately for each key, even when keys share a plan. Independent cycles start when the first request is admitted. Shared cycles use the configured schedule for every bound key.
 - A manual quota reset keeps shared reset times unchanged. Independent cycles restart when the next request is admitted.

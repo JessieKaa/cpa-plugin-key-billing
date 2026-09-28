@@ -21,6 +21,8 @@
 
 ## 工作原理
 
+未绑定订阅计划的 API Key 是非托管 Key：计费插件完全绕过，模型、价格、并发、配额与记账均不适用，请求直接走 CLIProxyAPI 原生路径。以下流程只适用于已绑定订阅计划的 Key。
+
 插件会在请求到达上游前检查订阅额度、并发和路由。上游调用结束后，CLIProxyAPI 通过 `usage.handle` 提供用量。插件据此记录请求事件、计算费用并更新周期消费额。
 
 ```mermaid
@@ -83,8 +85,8 @@ plugins:
       enabled: true
       debug: false # 是否记录 debug 日志，例如路由日志、匹配参考价日志
       codex_fast_mode_billing: false # 开启后，Codex 的 priority 请求按 2.5 倍计费
-      mask_api_key_view_emails: false # 对 API Key 查询页面返回的邮箱进行掩码脱敏
-      allow_api_key_quota_reset: false # 允许 API Key 用户重置可访问的 Codex 认证文件额度，消耗上游重置次数
+      mask_api_key_view_emails: false # 已废弃，保持严格解析兼容；下游账户门户已移除，此设置不再生效
+      allow_api_key_quota_reset: false # 已废弃，保持严格解析兼容；下游账户门户已移除，此设置不再生效
       state_file: "plugins/cpa-key-billing-state-v1.db"
 ```
 
@@ -94,25 +96,21 @@ plugins:
 > - v1.0.0 至最新版本的数据库文件支持自动迁移。
 > - v0.8.4 及更早版本的 JSON 或 SQLite 数据文件不支持迁移，请将 `state_file` 指向新文件。
 
-重启 CLIProxyAPI 后，在管理中心打开「API Key Billing」。确认模型定价后，创建订阅计划并绑定需要限制的 API Key。
+重启 CLIProxyAPI 后，创建订阅计划并绑定需要限制的 API Key。未绑定的 API Key 不受插件限制，也不会计入用量。
 
 ## 页面访问
 
-管理员可以从 CLIProxyAPI 管理中心的「API Key Billing」菜单进入，也可以直接打开：
+插件不再注册任何 `/v0/resource/plugins/...` 路由，也没有下游账户界面。管理界面是独立发布的单文件 `cpa-key-billing-ui.html`，由 Nginx 在管理员专属路径下提供，所有管理操作都需要 CPA Management key：
 
 ```text
-http(s)://<CLIProxyAPI 地址>/v0/resource/plugins/cpa-key-billing/ui
+https://<管理域名>/admin/cpa-key-billing
 ```
 
-普通用户使用自己的 API Key 查询订阅额度和用量时，直接打开：
-
-```text
-http(s)://<CLIProxyAPI 地址>/v0/resource/plugins/cpa-key-billing/ui#account
-```
+构建、Nginx 配置、发布物校验与部署步骤见 [docs/deployment.md](docs/deployment.md)。模型目录发现会通过 `/v1/models` 使用 `api-keys` 中的第一个 Key，这是唯一的非 Management 请求。
 
 ## 计费与订阅规则
 
-- 未绑定订阅计划的 API Key 只统计用量，不限制额度。
+- 未绑定订阅计划的 API Key 完全绕过插件：不限制额度，也不记录用量。
 - 订阅计划可设置多个自定义额度窗口，每个窗口可单独或组合限制金额、Token、请求数。
 - 每个 API Key 独立记账。独立周期从首次放行开始；统一周期可为各窗口指定下次开始时间，所有绑定 Key 按固定时间重置。
 - 手动重置额度时，统一周期的重置时间保持不变；独立周期在下一次放行时重新开始。
