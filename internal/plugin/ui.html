@@ -411,7 +411,7 @@
         .head { padding-right: 0; min-height: 0; margin-bottom: 12px; }
       }
       .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); }
-      .tabs button[data-tab], .tabs button[data-account-tab] {
+      .tabs button[data-tab] {
         flex: 0 0 auto;
         min-height: 0;
         border: none;
@@ -425,11 +425,8 @@
         line-height: 1.5;
         white-space: nowrap;
       }
-      .tabs button[data-tab]:hover, .tabs button[data-account-tab]:hover { background: none; color: var(--text-primary); }
-      .tabs button[data-tab].active, .tabs button[data-account-tab].active {
-        color: var(--text-primary);
-        border-bottom-color: var(--primary-color);
-      }
+      .tabs button[data-tab]:hover { background: none; color: var(--text-primary); }
+      .tabs button[data-tab].active { color: var(--text-primary); border-bottom-color: var(--primary-color); }
       .page-tabs-row {
         display: grid;
         grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
@@ -463,7 +460,6 @@
         border-radius: 50%;
         line-height: 0;
       }
-      body.embedded .tab-refresh { display: grid; }
       .tabs-scroll {
         --tabs-fade-surface: var(--bg-secondary);
         position: relative;
@@ -556,9 +552,7 @@
       :root[data-cpamp-plugin-host="true"] .selection-list, :root[data-cpamp-plugin-host="true"] .routing-list {
         background: var(--app-surface-strong, var(--bg-primary));
       }
-      :root[data-cpamp-plugin-host="true"] .account-model-card,
-      :root[data-cpamp-plugin-host="true"] .auth-file-card,
-      :root[data-cpamp-plugin-host="true"] .price-reference-option {
+      :root[data-cpamp-plugin-host="true"] .auth-file-card, :root[data-cpamp-plugin-host="true"] .price-reference-option {
         border-color: var(--border-subtle, var(--app-border));
         background: var(--surface-subtle, var(--app-surface-muted));
       }
@@ -624,7 +618,7 @@
         border-radius: 14px;
       }
       :root[data-cpamp-plugin-host="true"] .tabs::-webkit-scrollbar { display: none; }
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab], :root[data-cpamp-plugin-host="true"] .tabs button[data-account-tab] {
+      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab] {
         flex: 0 0 auto;
         min-height: 34px;
         padding: 0 15px;
@@ -636,16 +630,13 @@
         font-weight: 600;
         line-height: 1.2;
       }
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab]:hover,
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-account-tab]:hover {
+      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab]:hover {
         border: 0;
         background: color-mix(in srgb, var(--primary-color) 6%, var(--bg-primary));
         color: var(--primary-active);
       }
       :root[data-cpamp-plugin-host="true"] .tabs button[data-tab].active,
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab].active:hover,
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-account-tab].active,
-      :root[data-cpamp-plugin-host="true"] .tabs button[data-account-tab].active:hover {
+      :root[data-cpamp-plugin-host="true"] .tabs button[data-tab].active:hover {
         border: 0;
         background: color-mix(in srgb, var(--bg-primary) 88%, var(--primary-color));
         color: var(--primary-active);
@@ -670,7 +661,6 @@
         select,
         textarea,
         .quota-fill,
-        .account-model-card,
         .auth-file-card,
         .lucide-chevron-icon,
         .tabs-scroll::before,
@@ -833,10 +823,6 @@
         color: var(--text-primary);
       }
       .icon-action .lucide-icon { width: 16px; height: 16px; }
-      body.embedded .standalone-actions { display: none; }
-      .account-subscription-stats { margin-bottom: 16px; }
-      .account-plan { display: grid; align-content: start; gap: 10px; margin: 0; }
-      .account-plan-value { font-size: 24px; }
       .quota-windows { display: grid; gap: 6px; min-width: 0; }
       .quota-window { display: flex; flex-direction: column; min-width: 0; gap: 5px; }
       .quota-title { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; flex-wrap: wrap; }
@@ -923,10 +909,6 @@
         .plan-window input { padding-left: 8px; padding-right: 6px; font-size: 12px; }
         .plan-window .field { font-size: 12px; }
       }
-      .account-models { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: stretch; }
-      .account-access-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
-      .account-access-scope-label { margin-bottom: 8px; color: var(--text-tertiary); font-size: 11px; font-weight: 600; }
-      .account-access-chips { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
       .plugin-log-message summary::-webkit-details-marker { display: none; }
       .details-summary { display: flex; align-items: flex-start; gap: 7px; list-style: none; cursor: pointer; }
       .details-summary-icon { display: grid; place-items: center; flex: 0 0 14px; height: 1.55em; }
@@ -934,70 +916,6 @@
       details[open] > .details-summary .lucide-chevron-icon, .routing-section-toggle[aria-expanded="true"] .lucide-chevron-icon {
         transform: rotate(90deg);
       }
-      .account-access-warnings { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-      .account-model-card {
-        display: grid;
-        align-content: start;
-        gap: 10px;
-        min-width: 0;
-        padding: 14px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
-        background: var(--bg-secondary);
-        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
-      }
-      .account-model-name {
-        display: block;
-        min-width: 0;
-        overflow: hidden;
-        color: var(--text-primary);
-        font-size: 14px;
-        line-height: 1.35;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .account-model-price-list { display: grid; gap: 6px; }
-      .account-model-price-row {
-        display: grid;
-        grid-template-columns: 52px minmax(48px, 1fr) minmax(108px, 1.25fr);
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        min-height: 34px;
-        padding: 6px 9px;
-        border-radius: calc(var(--radius-md) - 2px);
-        background: color-mix(in srgb, var(--text-primary) 4%, transparent);
-        font-size: 12px;
-      }
-      .account-model-price-row:not(.tiered) { grid-template-columns: 52px minmax(48px, 1fr); }
-      .account-model-price-label { color: var(--text-tertiary); white-space: nowrap; }
-      .account-model-base-price, .account-model-long-price strong {
-        color: var(--text-primary);
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-      }
-      .account-model-base-price { justify-self: end; min-width: 52px; text-align: right; }
-      .account-model-long-price {
-        display: grid;
-        grid-template-columns: minmax(54px, 1fr) minmax(48px, auto);
-        align-items: baseline;
-        gap: 6px;
-        min-width: 0;
-        padding-left: 8px;
-        border-left: 1px solid var(--border-color);
-      }
-      .account-model-long-price strong { justify-self: end; min-width: 48px; text-align: right; }
-      .account-model-threshold {
-        justify-self: end;
-        padding: 2px 7px;
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--primary-color) 10%, transparent);
-        color: var(--primary-active);
-        font-size: 11px;
-        font-weight: 600;
-        white-space: nowrap;
-      }
-      .account-empty { padding: 40px 20px; text-align: center; }
       .empty { padding: 26px; text-align: center; color: var(--text-tertiary); }
       .section-loading { min-height: 400px; }
       .auth-filter-bar { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
@@ -1097,7 +1015,7 @@
         transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
       }
       @media (hover: hover) {
-        .account-model-card:hover, .auth-file-card:hover {
+        .auth-file-card:hover {
           transform: translateY(-2px);
           border-color: var(--border-hover);
           background: color-mix(in srgb, var(--bg-secondary) 92%, var(--primary-color));
@@ -1528,12 +1446,11 @@
         max-width: var(--filter-select-max-width);
       }
       .section-toolbar, .settings-section-header { margin-bottom: 12px; }
-      .section-toolbar h2, .settings-section-header h2, .account-plan h2 { margin: 0; }
+      .section-toolbar h2, .settings-section-header h2 { margin: 0; }
       .section-actions { min-width: 0; }
       .section-actions > button, .usage-distribution-tabs button { white-space: nowrap; }
       .key-toolbar-buttons { gap: 8px; }
       #keys-import-labels { display: none; }
-      :root[data-cpamp-plugin-host="true"] body.embedded #keys-import-labels { display: inline-flex; }
       .event-list-card {
         height: calc(100svh - var(--event-list-top, var(--page-gap)) - var(--page-gap));
         min-height: 0;
@@ -1837,9 +1754,7 @@
       @media (max-width: 768px) {
         :root { --page-gap: 12px; }
         .wrap { padding: 14px 12px 0; }
-        .account-subscription-stats { grid-template-columns: 1fr; }
         /* CPAMC overlays mobile controls; CPAMP keeps them outside the frame. */
-        :root:not([data-cpamp-plugin-host="true"]) body.embedded .wrap { padding-top: 90px; }
         .section-toolbar { align-items: center; }
         .section-toolbar > .section-actions {
           display: grid;
@@ -1857,7 +1772,6 @@
         #tab-keys .key-toolbar-buttons > * { align-self: stretch; width: 100%; min-width: 0; white-space: normal; }
         /* Only CPAMP shows the import button; without it search takes the whole line and the rest pair up below. */
         #tab-keys .section-actions > .wide-search { grid-column: 1 / -1; }
-        :root[data-cpamp-plugin-host="true"] body.embedded #tab-keys .section-actions > .wide-search { grid-column: auto; }
         /* Search takes the whole line; the remaining controls split the next one and wrap labels too long for half of it. */
         #tab-prices .section-actions, #tab-plugin-logs .section-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         #price-filter, #plugin-log-filter { grid-column: 1 / -1; }
@@ -1899,10 +1813,9 @@
         .request-failure .event-entry-tags .tag { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
         .gate { margin: 3vh auto; padding: 16px; }
         .app-header { align-items: center; }
-        body:not(.embedded) .app-header { flex-wrap: nowrap; }
-        body:not(.embedded) .app-header .app-title { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; }
-        body:not(.embedded) #account-identity { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        body:not(.embedded) .app-header .standalone-actions {
+        body .app-header { flex-wrap: nowrap; }
+        body .app-header .app-title { flex: 1 1 auto; flex-wrap: nowrap; overflow: hidden; }
+        body .app-header .standalone-actions {
           flex: 0 0 auto;
           width: auto;
           justify-content: flex-end;
@@ -1913,9 +1826,8 @@
         .standalone-actions .icon-action { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
       }
       @media (max-width: 520px) {
-        body:not(.embedded) #account-identity { display: none; }
-        body:not(.embedded) .app-header, body:not(.embedded) .app-header .app-title { gap: 7px; }
-        body:not(.embedded) .standalone-actions .icon-action { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
+        body .app-header, body .app-header .app-title { gap: 7px; }
+        body .standalone-actions .icon-action { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
       }
       .shared-time-filter { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 0 1 auto; min-width: 0; }
       .shared-time-filter > .native-select { flex: 0 1 auto; }
@@ -1985,6 +1897,7 @@
         border-radius: 10px;
         background: color-mix(in srgb, var(--analysis-accent) 5%, var(--bg-primary));
       }
+      .analysis-summary-trend svg { display: block; width: 100%; height: 100%; }
       .usage-trend-card h2 { margin-bottom: 10px; }
       .usage-trend-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
       .usage-trend-legend-item {
@@ -2002,6 +1915,7 @@
       }
       .usage-trend-legend-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--legend-color); }
       .usage-trend-chart { position: relative; height: 360px; min-width: 0; }
+      .usage-trend-chart svg { display: block; width: 100%; height: 100%; }
       .usage-distribution-header { margin-bottom: 18px; }
       .usage-distribution-controls { gap: 12px; flex-wrap: nowrap; min-width: 0; max-width: 100%; }
       .usage-distribution-controls > .native-select { flex: 0 1 auto; }
@@ -2023,7 +1937,7 @@
         align-items: center;
       }
       .usage-distribution-chart { width: min(260px, 100%); height: 260px; margin: auto; position: relative; }
-      .usage-distribution-chart canvas { display: block; width: 100% !important; height: 100% !important; }
+      .usage-distribution-chart svg { display: block; width: 100% !important; height: 100% !important; }
       .usage-distribution-list { display: grid; }
       .usage-distribution-row { display: grid; gap: 7px; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
       .usage-distribution-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -2097,7 +2011,6 @@
         .settings-dialog { padding: 18px; }
         .route-dialog .route-form-toolbar { grid-template-columns: 1fr; }
         .settings-entry-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .account-access-summary, .price-fields { grid-template-columns: 1fr; }
         .price-reference-option { grid-template-columns: 1fr; gap: 2px; }
         .price-reference-prices { text-align: left; }
       }
@@ -2108,46 +2021,19 @@
       #keys-body tr.key-deleted { background: color-mix(in srgb, var(--text-secondary) 5%, transparent); color: var(--text-secondary); }
       #keys-body tr.key-deleted .quota-window { opacity: 0.65; }
       #keys-body tr.key-deleted .quota-fill { background: var(--text-tertiary); }
+      .key-status-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     </style>
     <script>
       "use strict";
-      function panelStoredValue(name) {
-        try {
-          let raw = localStorage.getItem(name);
-          if (!raw) return null;
-          const prefix = "enc::v1::";
-          if (raw.startsWith(prefix)) {
-            const secret = new TextEncoder().encode("cli-proxy-api-webui::secure-storage|" + location.host + "|" + navigator.userAgent);
-            const binary = atob(raw.slice(prefix.length));
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i) ^ secret[i % secret.length];
-            raw = new TextDecoder().decode(bytes);
-          }
-          return JSON.parse(raw);
-        } catch (_) { return null; }
-      }
-
-      /* Apply the host or stored theme before painting the body. */
+      /* Apply the stored theme before painting the body. */
       (function () {
-        const STORE_KEY = "cli-proxy-theme";
         const PLUGIN_STORE_KEY = "cpa-key-billing:theme";
-
-        function parentDocument() {
-          if (window.parent === window) return null;
-          try { return window.parent.document; } catch (_) { return null; }
-        }
-
-        function storedTheme() {
-          const theme = panelStoredValue(STORE_KEY)?.state?.theme;
-          return typeof theme === "string" ? theme : "";
-        }
 
         const systemDark = () => !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
         function resolve(theme) {
           if (theme === "dark" || theme === "white") return theme;
-          if (theme === "" || theme === "auto") return systemDark() ? "dark" : "white";
-          return "";
+          return systemDark() ? "dark" : "white";
         }
 
         function readPluginTheme() {
@@ -2159,11 +2045,7 @@
         }
 
         let selectedTheme = readPluginTheme();
-        function currentTheme() {
-          const doc = parentDocument();
-          if (doc) return doc.documentElement.getAttribute("data-theme") || "";
-          return selectedTheme || resolve(storedTheme());
-        }
+        function currentTheme() { return selectedTheme || resolve(""); }
 
         let appliedTheme = null;
         function apply(theme) {
@@ -2179,15 +2061,12 @@
         const sync = () => apply(currentTheme());
         sync();
 
-        const doc = parentDocument();
-        if (doc) { new MutationObserver(sync).observe(doc.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } else {
-          window.addEventListener("storage", (event) => {
-            if (!event.key || event.key === STORE_KEY || event.key === PLUGIN_STORE_KEY) {
-              selectedTheme = readPluginTheme();
-              sync();
-            }
-          });
-        }
+        window.addEventListener("storage", (event) => {
+          if (!event.key || event.key === PLUGIN_STORE_KEY) {
+            selectedTheme = readPluginTheme();
+            sync();
+          }
+        });
         if (window.matchMedia) { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sync); }
         window.billingTheme = {
           current: () => appliedTheme,
@@ -2209,23 +2088,17 @@
     <div class="wrap">
       <section id="gate" class="card gate hidden" aria-labelledby="gate-title">
         <div class="gate-top">
-          <h1 id="gate-title" data-i18n="ui.choose_an_access_method">Choose an access method</h1>
+          <h1 id="gate-title" data-i18n="ui.open_management_console">Sign in</h1>
           <div class="standalone-actions">
             <button type="button" class="icon-action" data-page-action="theme" aria-label="Switch theme" data-i18n-aria-label="ui.switch_theme"></button>
           </div>
         </div>
-        <div class="access-switch" role="tablist" aria-label="Access method" data-i18n-aria-label="ui.access_method">
-          <button id="gate-mode-admin" type="button" role="tab" aria-selected="true" class="active" data-i18n="ui.management_key">Management key</button>
-          <button id="gate-mode-account" type="button" role="tab" aria-selected="false" data-i18n="ui.api_key_access">API key</button>
-        </div>
         <form id="gate-form">
-          <input id="gate-username" class="hidden" type="text" name="access-role" autocomplete="username" value="admin" />
           <div id="gate-error" class="notice err"></div>
           <label class="field">
             <span id="gate-key-label" data-i18n="ui.management_key">Management key</span>
             <input id="gate-key" type="password" autocomplete="current-password" placeholder="Enter management key"  data-i18n-placeholder="ui.enter_management_key"/>
           </label>
-          <label class="remember-row"> <input id="gate-remember" type="checkbox" /> <span data-i18n="ui.remember_key">Remember this key</span> </label>
           <button id="gate-submit" type="submit" class="primary gate-submit" data-i18n="ui.open_management_console">Sign in</button>
         </form>
       </section>
@@ -2273,8 +2146,8 @@
               class="labeled-icon-button privacy-mask-button"
               type="button"
               aria-pressed="false"
-              title="Blur API keys, labels, and account emails"
-              data-i18n-title="ui.blur_api_keys_labels_and_account_emails"
+              title="Blur API keys and labels"
+              data-i18n-title="ui.blur_api_keys_and_labels"
             ></button>
             <button type="button" class="icon-action tab-refresh" data-page-action="refresh" aria-label="Refresh" data-i18n-aria-label="ui.refresh"></button>
           </div>
@@ -2480,156 +2353,9 @@
         </section>
       </main>
 
-      <main id="account-app" class="hidden">
-        <header class="head app-header">
-          <div class="app-title"> <h1 data-i18n="ui.api_key_usage">API Key Usage</h1> <span id="account-identity" class="muted mono mask-blur"></span> </div>
-          <div class="standalone-actions" aria-label="Page actions" data-i18n-aria-label="ui.page_actions">
-            <button type="button" class="icon-action" data-page-action="refresh" aria-label="Refresh" data-i18n-aria-label="ui.refresh"></button>
-            <button type="button" class="icon-action" data-page-action="theme" aria-label="Switch theme" data-i18n-aria-label="ui.switch_theme"></button>
-            <button type="button" class="icon-action" data-page-action="logout" aria-label="Sign out" data-i18n-aria-label="ui.sign_out"></button>
-          </div>
-        </header>
-        <div id="account-data-status" class="notice err" role="status"></div>
-        <section id="account-untracked" class="card account-empty hidden">
-          <h2 data-i18n="ui.no_billing_records_yet">No usage recorded yet</h2>
-          <p class="muted" data-i18n="ui.this_api_key_is_valid_but_the_plugin_has_not_received_any_attributable_usage_yet">This API key is valid. Usage will appear here after the plugin receives a usage record for it.</p>
-        </section>
-        <section id="account-content">
-          <div class="page-tabs-row">
-            <div class="tabs-scroll">
-              <nav class="tabs" aria-label="API key views" data-i18n-aria-label="ui.api_key_views">
-                <button type="button" class="active" data-account-tab="subscription" data-i18n="ui.subscription">Subscription</button>
-                <button type="button" data-account-tab="analysis" data-i18n="ui.analysis">Analysis</button>
-                <button type="button" data-account-tab="request-events" data-i18n="ui.request_events">Request events</button>
-                <button type="button" data-account-tab="errors" data-i18n="ui.error_events">Error events</button>
-                <button type="button" data-account-tab="auth-files" data-i18n="ui.auth_files">Auth Files</button>
-              </nav>
-            </div>
-            <div class="page-tab-actions hidden">
-              <div id="account-shared-time-filter" class="shared-time-filter hidden">
-                <div class="time-range-control">
-                  <button
-                    id="account-shared-time-trigger"
-                    class="time-range-trigger"
-                    type="button"
-                    aria-haspopup="dialog"
-                    aria-expanded="false"
-                  >
-                    <span class="time-range-icon" data-lucide-icon="clock" aria-hidden="true"></span>
-                    <span id="account-shared-time-label" data-i18n="ui.last_30_days">Last 30 days</span>
-                    <span class="time-range-chevron" data-lucide-icon="chevron-down" aria-hidden="true"></span>
-                  </button>
-                  <div id="account-shared-time-popover" class="time-range-popover hidden" role="dialog" aria-label="Select time range" data-i18n-aria-label="ui.select_time_range"></div>
-                </div>
-              </div>
-              <button id="account-events-export" class="labeled-icon-button hidden" type="button" data-i18n="ui.export">Export</button>
-            </div>
-            <div class="page-tab-tools">
-              <button
-                id="account-privacy-mask"
-                class="labeled-icon-button privacy-mask-button"
-                type="button"
-                aria-pressed="false"
-                title="Blur API keys, labels, and account emails"
-                data-i18n-title="ui.blur_api_keys_labels_and_account_emails"
-              ></button>
-              <button type="button" class="icon-action tab-refresh" data-page-action="refresh" aria-label="Refresh" data-i18n-aria-label="ui.refresh"></button>
-            </div>
-          </div>
-          <div id="account-shared-time-backdrop" class="time-range-backdrop hidden"></div>
-          <section id="account-tab-subscription">
-            <div class="stats account-subscription-stats">
-              <div class="card account-plan">
-                <div class="row spread">
-                  <h2 id="account-plan-name" data-i18n="ui.remaining_subscription_quota">Quota remaining</h2>
-                  <span id="account-plan-status" class="tag plain"></span>
-                </div>
-                <div id="account-windows"></div>
-              </div>
-              <div class="card account-plan">
-                <h2 data-i18n="ui.concurrency_limit">Concurrency limit</h2>
-                <b id="account-concurrency" class="account-plan-value">—</b>
-                <div class="muted small" data-i18n="ui.active_connections_concurrency_limit_for_this_api_key">In-flight requests&thinsp;/&thinsp;concurrency limit for this API key</div>
-              </div>
-            </div>
-            <div class="card" id="account-access-card"> <h2 data-i18n="ui.access_permissions">Access permissions</h2> <div id="account-access"></div> </div>
-            <div class="card"> <h2 data-i18n="ui.model_prices">Model prices</h2> <div id="account-models" class="account-models"></div> </div>
-          </section>
-          <section id="account-tab-analysis" class="hidden"><div id="account-analysis-body"></div></section>
-          <section id="account-tab-request-events" class="hidden">
-            <div class="card event-list-card">
-              <div class="row spread section-toolbar">
-                <h2 data-i18n="ui.request_events">Request events</h2>
-                <div class="row section-actions event-card-actions">
-                  <span class="native-select">
-                    <select id="account-request-event-model" aria-label="Filter by model" data-i18n-aria-label="ui.filter_by_model"> <option value="" data-i18n="ui.all_models">All models</option> </select>
-                  </span>
-                  <span class="native-select mask-select">
-                    <select id="account-request-event-source" aria-label="Filter by source" data-i18n-aria-label="ui.filter_by_source"> <option value="" data-i18n="ui.all_sources">All sources</option> </select>
-                  </span>
-                  <span class="native-select">
-                    <select id="account-request-event-status" aria-label="Filter by result" data-i18n-aria-label="ui.filter_by_result">
-                      <option value="" data-i18n="ui.all_results">All results</option>
-                      <option value="false" data-i18n="ui.succeeded">Succeeded</option>
-                      <option value="true" data-i18n="ui.failed">Failed</option>
-                    </select>
-                  </span>
-                  <button id="account-request-events-filter-clear" class="link" type="button" disabled data-i18n="ui.clear_filters">Clear filters</button>
-                </div>
-              </div>
-              <div id="account-request-events-body" class="event-list-region"></div>
-              <div class="event-list-footer"><span id="account-request-event-note" class="muted small"></span></div>
-            </div>
-          </section>
-          <section id="account-tab-errors" class="hidden">
-            <div class="card event-list-card">
-              <div class="row spread section-toolbar">
-                <h2 data-i18n="ui.error_events">Error events</h2>
-                <div class="row section-actions event-card-actions">
-                  <span class="native-select"> <select id="account-error-model"> <option value="" data-i18n="ui.all_models">All models</option> </select> </span>
-                  <span class="native-select mask-select"> <select id="account-error-source"> <option value="" data-i18n="ui.all_sources">All sources</option> </select> </span>
-                  <span class="native-select">
-                    <select id="account-error-type" aria-label="Filter by error type" data-i18n-aria-label="ui.filter_by_error_type"> <option value="" data-i18n="ui.all_error_types">All error types</option> </select>
-                  </span>
-                  <button id="account-errors-filter-clear" class="link" type="button" disabled data-i18n="ui.clear_filters">Clear filters</button>
-                </div>
-              </div>
-              <div id="account-errors-body" class="event-list-region"></div>
-              <div class="event-list-footer"><span id="account-error-note" class="muted small"></span></div>
-            </div>
-          </section>
-          <section id="account-tab-auth-files" class="hidden">
-            <div class="card">
-              <div class="row spread section-toolbar">
-                <h2 data-i18n="ui.auth_files">Auth Files</h2>
-                <div class="row section-actions auth-filter-bar">
-                  <label class="toggle-filter">
-                    <input id="account-auth-enabled-only" type="checkbox" role="switch" checked />
-                    <span data-i18n="ui.enabled_only">Enabled only</span>
-                  </label>
-                  <span class="native-select">
-                    <select id="account-auth-provider" aria-label="Filter by auth file category" data-i18n-aria-label="ui.filter_by_auth_file_category">
-                      <option value="" data-i18n="ui.all_categories">All categories</option>
-                      <option value="claude">Claude</option>
-                      <option value="antigravity">Antigravity</option>
-                      <option value="codex">Codex</option>
-                      <option value="xai">xAI</option>
-                      <option value="kimi">Kimi</option>
-                    </select>
-                  </span>
-                  <input id="account-auth-search" type="search" placeholder="Search auth files" autocomplete="off"  data-i18n-placeholder="ui.search_auth_files"/>
-                  <button id="account-auth-refresh-filtered" class="labeled-icon-button" type="button" data-i18n="ui.update_quotas">Refresh quotas</button>
-                </div>
-              </div>
-              <div id="account-auth-files-body"></div>
-            </div>
-          </section>
-        </section>
-      </main>
     </div>
     <footer class="page-footer">
-      <span>© 2026 <a href="https://github.com/haowang02/cpa-plugin-key-billing" target="_blank" rel="noopener noreferrer">CPA Key Billing</a></span>
-      <span>&thinsp;·&thinsp;<a href="https://github.com/haowang02/cpa-plugin-key-billing/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-i18n="ui.license">License</a></span>
+      <span>© 2026 <span>CPA Key Billing</span></span>
       <span>&thinsp;·&thinsp;<span data-i18n="ui.version">Version</span>: v1.3.18</span>
     </footer>
 
@@ -2695,7 +2421,6 @@
     <script>
       "use strict";
       const PLUGIN_BASE = "/v0/management/plugins/cpa-key-billing";
-      const ACCOUNT_BASE = "/v0/resource/plugins/cpa-key-billing";
       const CALLER_SCOPE_SALT = "cli-proxy-api:caller-scope:v1\u0000";
       const DISPLAY_SEPARATOR = "\u2009·\u2009";
       const $ = (id) => document.getElementById(id);
@@ -2703,33 +2428,12 @@
       const locale = () => window.billingI18n.locale();
       window.billingI18n.initialize();
 
-      /* A same-origin iframe can borrow the panel's obfuscated management key. When
-       * it is unavailable, the standalone login can use its own encrypted vault. */
-      const CREDENTIAL_DB = "cpa-key-billing-credentials";
-      const CREDENTIAL_STORE = "vault";
-      const CREDENTIAL_KEY = "wrapping-key";
-      const SESSION_CREDENTIAL_PREFIX = "cpa-key-billing.session.v1.";
       const VIEW_PREFERENCE_PREFIX = "cpa-key-billing.view.v1.";
-
-      function readPanelKey() {
-        const fromStore = panelStoredValue("cli-proxy-auth")?.state?.managementKey;
-        if (typeof fromStore === "string" && fromStore.trim()) return fromStore.trim();
-
-        const direct = panelStoredValue("managementKey");
-        if (typeof direct === "string" && direct.trim()) return direct.trim();
-
-        return "";
-      }
-
-      const embedded = window.parent !== window;
-      document.body.classList.toggle("embedded", embedded);
       const ADMIN_TAB_IDS = ["keys", "analysis", "request-events", "errors", "auth-files", "settings"];
-      const ACCOUNT_TAB_IDS = ["subscription", "analysis", "request-events", "errors", "auth-files"];
-      const PAGE_ROUTE_KEY = "cpa-key-billing.route.v1." + (embedded ? "embedded" : "standalone");
+      const PAGE_ROUTE_KEY = "cpa-key-billing.route.v1.standalone";
 
       function parsePageRoute(value) {
         const [role, tab] = value.split("/");
-        if (role === "account") return { role, tab: ACCOUNT_TAB_IDS.includes(tab) ? tab : "subscription" };
         if (role === "admin") return { role, tab: ADMIN_TAB_IDS.includes(tab) ? tab : "keys" };
         return null;
       }
@@ -2756,82 +2460,10 @@
       let currentRole = "";
       let sessionGeneration = 0;
       const activeRequests = new Set();
-      let loginMode = initialRoute.role;
-      let loginModeRequest = 0;
       function emptyAuthQuotaState() { return { authQuotas: new Map(), authQuotaLoading: new Set(), authQuotaErrors: new Map() }; }
       let adminUIState = { ...emptyAuthQuotaState(), keySubmissions: new Set() };
-      let accountUIState = emptyAuthQuotaState();
-      const authQuotaGeneration = { admin: 0, account: 0 };
-      const credentialScope = { admin: "", account: "" };
-      let accountTab = initialRoute.role === "account" ? initialRoute.tab : "subscription";
-
-      function openCredentialDB() {
-        return new Promise((resolve, reject) => {
-          if (!window.indexedDB || !window.crypto?.subtle) {
-            reject(new UIError(m("ui.secure_key_storage_is_not_supported_in_this_environment")));
-            return;
-          }
-          const request = indexedDB.open(CREDENTIAL_DB, 1);
-          request.onupgradeneeded = () => request.result.createObjectStore(CREDENTIAL_STORE);
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error || new UIError(m("ui.browser_credential_storage_failed")));
-        });
-      }
-
-      async function credentialTransaction(mode, operation) {
-        const db = await openCredentialDB();
-        try {
-          return await new Promise((resolve, reject) => {
-            const transaction = db.transaction(CREDENTIAL_STORE, mode);
-            const request = operation(transaction.objectStore(CREDENTIAL_STORE));
-            transaction.oncomplete = () => resolve(request?.result);
-            transaction.onerror = transaction.onabort = () =>
-              reject(transaction.error || new UIError(m("ui.browser_credential_storage_failed")));
-          });
-        } finally { db.close(); }
-      }
-
-      async function deleteCredential(role) {
-        try { await credentialTransaction("readwrite", (store) => store.delete(role)); } catch (_) {}
-      }
-
-      async function wrappingKey() {
-        const key = await credentialTransaction("readonly", (store) => store.get(CREDENTIAL_KEY));
-        if (key) return key;
-        const created = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
-        const existing = await credentialTransaction("readwrite", (store) => {
-          // Another tab may have created the shared key while generation was pending.
-          const request = store.get(CREDENTIAL_KEY);
-          request.onsuccess = () => { if (!request.result) store.put(created, CREDENTIAL_KEY); };
-          return request;
-        });
-        return existing || created;
-      }
-
-      async function saveCredential(role, credential, remember) {
-        const generation = sessionGeneration;
-        const key = await wrappingKey();
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(credential));
-        const saved = { iv: Array.from(iv), data: Array.from(new Uint8Array(data)) };
-        await credentialTransaction("readwrite", (store) => {
-          if (generation !== sessionGeneration) return;
-          return remember ? store.put(saved, role) : store.delete(role);
-        });
-        if (generation !== sessionGeneration) return;
-        sessionStorage.setItem(SESSION_CREDENTIAL_PREFIX + role, JSON.stringify(saved));
-      }
-
-      async function recalledCredential(role, includeSession = false) {
-        try {
-          const session = includeSession ? sessionStorage.getItem(SESSION_CREDENTIAL_PREFIX + role) : null;
-          const saved = session !== null ? JSON.parse(session) : await credentialTransaction("readonly", (store) => store.get(role));
-          if (!saved?.iv || !saved?.data) return "";
-          const key = await credentialTransaction("readonly", (store) => store.get(CREDENTIAL_KEY));
-          const data = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(saved.iv) }, key, new Uint8Array(saved.data));
-          return new TextDecoder().decode(data).trim();
-        } catch (_) { return ""; }
-      }
+      const authQuotaGeneration = { admin: 0 };
+      const credentialScope = { admin: "" };
 
       const CONCURRENCY_OPTIONS = [0, 1, 2, 3, 5, 10, 20, 50];
       const CUSTOM_CONCURRENCY = "__custom__";
@@ -2901,8 +2533,8 @@
         yesterday: m("ui.yesterday"),
         custom: m("ui.custom")
       };
-      const sharedTimeDrafts = { admin: null, account: null };
-      const sharedTimeChoices = { admin: { hour: 8, day: 7, custom: null }, account: { hour: 8, day: 7, custom: null } };
+      const sharedTimeDrafts = { admin: null };
+      const sharedTimeChoices = { admin: { hour: 8, day: 7, custom: null } };
       // Data groups publish independently; saves replace their returned entries.
       // Each entry retains its last successful value when a read fails.
       function dataEntries(labels) {
@@ -2918,14 +2550,6 @@
           models: m("ui.model_catalog"),
           catalog: m("ui.model_prices"),
           priceStatus: m("ui.reference_price_status"),
-          authFiles: m("ui.auth_files")
-        }),
-        account: dataEntries({
-          profile: m("ui.account_profile"),
-          subscription: m("ui.subscription"),
-          routing: m("ui.access_permissions"),
-          models: m("ui.model_catalog"),
-          catalog: m("ui.model_prices"),
           authFiles: m("ui.auth_files")
         })
       };
@@ -2971,10 +2595,6 @@
           configuration: { names: ["keys", "plans", "routes", "credentials", "models"], syncErrors: [] },
           pricing: { names: ["catalog", "priceStatus"], after: "configuration" },
           authFiles: { names: ["authFiles"] }
-        },
-        account: {
-          ...Object.fromEntries(Object.keys(resources.account).map((name) => [name, { names: [name] }])),
-          catalog: { names: ["catalog"], after: "models" }
         }
       };
       // These are also page dependencies, even when the editor is still closed.
@@ -3028,14 +2648,14 @@
         return query;
       }
 
-      const analysisQueries = Object.fromEntries(["admin", "account"].map((role) => [role, createQuery(m("ui.analysis"))]));
+      const analysisQueries = { admin: createQuery(m("ui.analysis")) };
       const eventKeysQuery = createQuery(m("ui.event_api_key_filter"));
 
       const PAGED_LIST_VIEWS = {
         events: {
           tab: "request-events",
           label: m("ui.request_events"),
-          scrollers: ["request-events-body", "account-request-events-body"],
+          scrollers: ["request-events-body"],
           timed: true,
           keyed: true,
           endpoint: "/events",
@@ -3045,7 +2665,7 @@
         errors: {
           tab: "errors",
           label: m("ui.error_events"),
-          scrollers: ["errors-body", "account-errors-body"],
+          scrollers: ["errors-body"],
           timed: true,
           keyed: true,
           endpoint: "/errors",
@@ -3062,27 +2682,24 @@
         }
       };
 
-      function requestEventFilters(account) {
-        const prefix = account ? "account-request-event" : "request-event";
+      function requestEventFilters() {
         const filters = {};
-        const key = account ? "" : $("analysis-key").value;
-        if (key) filters.api_key = key;
+        if ($("analysis-key").value) filters.api_key = $("analysis-key").value;
         for (const [field, control] of [["model", "model"], ["source", "source"], ["failed", "status"]]) {
-          const value = $(prefix + "-" + control).value;
+          const value = $("request-event-" + control).value;
           if (value) filters[field] = value;
         }
         return filters;
       }
 
-      function errorEventFilters(account) {
-        const prefix = account ? "account-" : "";
+      function errorEventFilters() {
         const filters = {};
-        if (!account && $("analysis-key").value) filters.api_key = $("analysis-key").value;
+        if ($("analysis-key").value) filters.api_key = $("analysis-key").value;
         for (const field of ["model", "source"]) {
-          const value = $(prefix + "error-" + field).value;
+          const value = $("error-" + field).value;
           if (value) filters[field] = value;
         }
-        const typeChoice = $(prefix + "error-type").value;
+        const typeChoice = $("error-type").value;
         if (typeChoice) {
           const errorType = typeChoice.slice(5);
           if (errorType) filters.error_type = errorType; else filters.error_type_empty = "true";
@@ -3092,23 +2709,23 @@
 
       // A selection separates its cache identity from the concrete time window.
       // Rolling ranges advance only when starting a fresh traversal.
-      function pagedListSelection(kind, account) {
+      function pagedListSelection(kind) {
         const view = PAGED_LIST_VIEWS[kind];
-        const filters = view.filters(account);
-        const range = view.timed ? selectedRange(account) : {};
+        const filters = view.filters();
+        const range = view.timed ? selectedRange() : {};
         if (view.timed) range.to = new Date(Math.min(Date.now(), Date.parse(range.to))).toISOString();
         return {
-          key: JSON.stringify([view.timed ? sharedTimeRanges[account ? "account" : "admin"] : null, filters]),
+          key: JSON.stringify([view.timed ? sharedTimeRanges.admin : null, filters]),
           params: { ...filters, ...range, limit: LIST_PAGE_SIZE }
         };
       }
 
-      async function fetchListPage(kind, account, params, previous = null) {
+      async function fetchListPage(kind, params, previous = null) {
         const view = PAGED_LIST_VIEWS[kind];
         const query = new URLSearchParams({ ...params, ...previous?.cursor });
         const path = view.endpoint + "?" + query;
         const revision = keyDirectory.beginRead();
-        const page = requireObject(await (account ? accountAPI(path) : plugin("GET", path)), view.label);
+        const page = requireObject(await plugin("GET", path), view.label);
         const entries = requireArray(page.entries, view.label);
         const integer = (value) => Number.isSafeInteger(value) && value >= 0;
         const id = (value) => (typeof value === "string" && /^-?\d+$/.test(value)) || Number.isSafeInteger(value);
@@ -3136,7 +2753,7 @@
 
       // createQuery calls this only after accepting the response. Stale reads
       // cannot publish Key metadata or append rows to a newer selection.
-      function mergeListPage(kind, account, { page, params, cursor, previous, revision }) {
+      function mergeListPage(kind, { page, params, cursor, previous, revision }) {
         const seen = new Set((previous?.page.entries || []).map((entry) => String(entry.id)));
         const incoming = page.entries.filter((entry) => {
           const id = String(entry.id);
@@ -3144,7 +2761,7 @@
           seen.add(id);
           return true;
         });
-        const rows = PAGED_LIST_VIEWS[kind].keyed && !account ? keyDirectory.receive(incoming, revision) : incoming;
+        const rows = PAGED_LIST_VIEWS[kind].keyed ? keyDirectory.receive(incoming, revision) : incoming;
         return {
           page: {
             ...page,
@@ -3156,20 +2773,20 @@
         };
       }
 
-      function createPagedList(kind, account) {
+      function createPagedList(kind) {
         const view = PAGED_LIST_VIEWS[kind];
-        const query = createQuery(view.label, (result) => mergeListPage(kind, account, result));
+        const query = createQuery(view.label, (result) => mergeListPage(kind, result));
         const list = {
           query,
           append: false,
           rendered: null,
           get data() { return query.value?.page || null; },
           get complete() { return !!query.value && !query.value.cursor; },
-          get scroller() { return $(view.scrollers[account ? 1 : 0]); },
-          active() { return currentRole === (account ? "account" : "admin") && activeTab(account) === view.tab; },
+          get scroller() { return $(view.scrollers[0]); },
+          active() { return currentRole === "admin" && activeTab() === view.tab; },
           replace(page) {
             list.reset();
-            query.key = pagedListSelection(kind, account).key;
+            query.key = pagedListSelection(kind).key;
             query.value = { page, cursor: null };
           },
           reset() {
@@ -3181,7 +2798,7 @@
           },
           renderItems(items, options) {
             const previous = list.rendered;
-            const identities = view.keyed && !account ? keyDirectory.value : null;
+            const identities = view.keyed ? keyDirectory.value : null;
             const columns = JSON.stringify(options.headers || null);
             // Appended pages retain the same entry objects. Rebuild when the
             // identity metadata or table shape changes, or rows are no longer a prefix.
@@ -3194,13 +2811,13 @@
             list.rendered = { items, columns, rows, identities };
           },
           load(reload = false) {
-            const selection = pagedListSelection(kind, account);
+            const selection = pagedListSelection(kind);
             if (selection.key !== query.key) list.reset();
             if (query.task && (!reload || !list.append)) return query.task;
             if (!reload && (query.value || query.error)) return Promise.resolve(query.value);
             list.append = false;
-            const task = query.read(selection.key, () => fetchListPage(kind, account, selection.params), true);
-            if (list.active()) { if (list.data) list.renderStatus(); else view.render(account); }
+            const task = query.read(selection.key, () => fetchListPage(kind, selection.params), true);
+            if (list.active()) { if (list.data) list.renderStatus(); else view.render(); }
             return task;
           },
           loadMore(retry = false) {
@@ -3208,7 +2825,7 @@
             if (query.error && !(retry && list.append)) return;
             const previous = query.value;
             list.append = true;
-            const task = query.read(query.key, () => fetchListPage(kind, account, previous.params, previous), true);
+            const task = query.read(query.key, () => fetchListPage(kind, previous.params, previous), true);
             list.renderStatus();
             guard(() => task);
           },
@@ -3274,14 +2891,11 @@
         });
       }
 
-      const pagedLists = {
-        admin: { events: createPagedList("events", false), errors: createPagedList("errors", false), logs: createPagedList("logs", false) },
-        account: { events: createPagedList("events", true), errors: createPagedList("errors", true) }
-      };
+      const pagedLists = { admin: { events: createPagedList("events"), errors: createPagedList("errors"), logs: createPagedList("logs") } };
 
-      function pagedList(kind, account = false) { return pagedLists[account ? "account" : "admin"][kind]; }
+      function pagedList(kind) { return pagedLists.admin[kind]; }
 
-      const sharedTimeRanges = { admin: { mode: "30d" }, account: { mode: "30d" } };
+      const sharedTimeRanges = { admin: { mode: "30d" } };
 
       function viewPreferenceKey(role, name) {
         const scope = credentialScope[role];
@@ -3324,10 +2938,10 @@
 
       function privacyMasked() { return document.body.classList.contains("privacy-masked"); }
 
-      function privacyMaskButton(role) { return $((role === "account" ? "account-" : "") + "privacy-mask"); }
+      function privacyMaskButton() { return $("privacy-mask"); }
 
-      function setPrivacyMask(role, masked) {
-        const button = privacyMaskButton(role);
+      function setPrivacyMask(masked) {
+        const button = privacyMaskButton();
         button.setAttribute("aria-pressed", String(masked));
         setLabeledActionIcon(button, masked ? "eye-off" : "eye", m("ui.mask"));
         document.body.classList.toggle("privacy-masked", masked);
@@ -3353,73 +2967,59 @@
         return { mode: "custom", unit: range.unit, from: from.toISOString(), to: to.toISOString() };
       }
 
-      function restoreRolePreferences(role) {
-        const account = role === "account";
-        const prefix = account ? "account-" : "";
+      function restoreRolePreferences() {
         // Dynamic choices must exist before the first filtered request, even
         // when the current result no longer contains the stored selection.
         for (const id of ["request-event-model", "request-event-source", "error-model", "error-source", "error-type"])
-          restoreChoice(role, prefix + id, "", true);
-        restoreChoice(role, prefix + "request-event-status", "");
-        restoreChoice(role, prefix + "auth-enabled-only", true);
-        restoreChoice(role, prefix + "auth-provider", "");
-        setPrivacyMask(role, viewPreference(role, prefix + "privacy-mask", false));
-        if (!account) {
-          restoreChoice(role, "analysis-key", "", true);
-          restoreChoice(role, "keys-include-deleted", false);
-          restoreChoice(role, "plugin-log-level", "all");
-        }
-        sharedTimeRanges[role] = storedTimeRange(role);
-        const range = sharedTimeRanges[role];
+          restoreChoice("admin", id, "", true);
+        restoreChoice("admin", "request-event-status", "");
+        restoreChoice("admin", "auth-enabled-only", true);
+        restoreChoice("admin", "auth-provider", "");
+        setPrivacyMask(viewPreference("admin", "privacy-mask", false));
+        restoreChoice("admin", "analysis-key", "", true);
+        restoreChoice("admin", "keys-include-deleted", false);
+        restoreChoice("admin", "plugin-log-level", "all");
+        sharedTimeRanges.admin = storedTimeRange("admin");
+        const range = sharedTimeRanges.admin;
         const rolling = rollingTimeMode(range.mode);
-        sharedTimeChoices[role] = { hour: 8, day: 7, custom: range.mode === "custom" ? range : null };
-        if (rolling) sharedTimeChoices[role][rolling.unit] = rolling.value;
-        const defaultDimension = account ? "models" : "api_keys";
-        const dimension = viewPreference(role, "analysis-dimension", defaultDimension);
-        const allowedDimensions = account ? ["models", "sources"] : ["api_keys", "models", "sources"];
-        analysisDimensions[role] = allowedDimensions.includes(dimension) ? dimension : defaultDimension;
-        const metric = viewPreference(role, "analysis-metric", "total_tokens");
-        analysisMetrics[role] = Object.hasOwn(DISTRIBUTION_METRICS, metric) ? metric : "total_tokens";
-        updateSharedTimeControl(account);
-        updateFilterClearButton($(prefix + "request-events-filter-clear"));
-        updateFilterClearButton($(prefix + "errors-filter-clear"));
+        sharedTimeChoices.admin = { hour: 8, day: 7, custom: range.mode === "custom" ? range : null };
+        if (rolling) sharedTimeChoices.admin[rolling.unit] = rolling.value;
+        const dimension = viewPreference("admin", "analysis-dimension", "api_keys");
+        analysisDimensions.admin = ["api_keys", "models", "sources"].includes(dimension) ? dimension : "api_keys";
+        const metric = viewPreference("admin", "analysis-metric", "total_tokens");
+        analysisMetrics.admin = Object.hasOwn(DISTRIBUTION_METRICS, metric) ? metric : "total_tokens";
+        updateSharedTimeControl();
+        updateFilterClearButton($("request-events-filter-clear"));
+        updateFilterClearButton($("errors-filter-clear"));
       }
 
-      function resetRoleControls(role) {
-        const account = role === "account";
-        const prefix = account ? "account-" : "";
-        closeSharedTimePopover(account);
-        setPrivacyMask(role, false);
-        $(prefix + "auth-search").value = "";
-        if (!account) {
-          $("key-filter").value = "";
-          $("keys-include-deleted").checked = false;
-          $("price-filter").value = "";
-          $("plugin-log-filter").value = "";
-        }
+      function resetRoleControls() {
+        closeSharedTimePopover();
+        setPrivacyMask(false);
+        $("auth-search").value = "";
+        $("key-filter").value = "";
+        $("keys-include-deleted").checked = false;
+        $("price-filter").value = "";
+        $("plugin-log-filter").value = "";
       }
 
-      function resetRoleData(role) {
-        const account = role === "account";
-        destroyAnalysisCharts(account);
-        if (role === "account") accountUIState = emptyAuthQuotaState();
-        else {
-          $("route-picker").close();
-          adminUIState = { ...emptyAuthQuotaState(), keySubmissions: new Set() };
-          expandedPluginLogIDs.clear();
-          resourceGroups.admin.configuration.syncErrors = [];
-          keyDirectory.clear();
-        }
-        for (const entry of Object.values(resources[role])) Object.assign(entry, { value: null, error: "" });
-        for (const group of Object.values(resourceGroups[role])) group.task = null;
-        for (const page of Object.values(pages[role])) {
+      function resetRoleData() {
+        destroyAnalysisCharts();
+        $("route-picker").close();
+        adminUIState = { ...emptyAuthQuotaState(), keySubmissions: new Set() };
+        expandedPluginLogIDs.clear();
+        resourceGroups.admin.configuration.syncErrors = [];
+        keyDirectory.clear();
+        for (const entry of Object.values(resources.admin)) Object.assign(entry, { value: null, error: "" });
+        for (const group of Object.values(resourceGroups.admin)) group.task = null;
+        for (const page of Object.values(pages.admin)) {
           page.task = null;
           for (const section of page.sections) section.displayed = null;
         }
-        analysisQueries[role].clear();
-        if (!account) eventKeysQuery.clear();
-        for (const list of Object.values(pagedLists[role])) list.reset();
-        resetRoleControls(role);
+        analysisQueries.admin.clear();
+        eventKeysQuery.clear();
+        for (const list of Object.values(pagedLists.admin)) list.reset();
+        resetRoleControls();
       }
 
       // CLIProxyAPI HTML-escapes every string in a plugin management response, so a
@@ -3479,10 +3079,7 @@
           const fallback = decoded && !/<[^>]+>/.test(decoded) ? decoded.slice(0, 200) + (decoded.length > 200 ? "…" : "") : "";
           const message = window.billingI18n.serverMessage(unescapeDeep(payload?.error), fallback);
           if ((resp.status === 401 || (resp.status === 403 && !opts?.keepSessionOnForbidden)) && !opts?.auxiliaryCredential) {
-            throw new AuthError(
-              message ||
-                (currentRole === "account" ? m("ui.invalid_api_key_or_access_denied") : m("ui.invalid_management_key_or_access_denied"))
-            );
+            throw new AuthError(message || m("ui.invalid_management_key_or_access_denied"));
           }
           throw new UIError(
             message ||
@@ -3495,7 +3092,6 @@
       }
 
       const plugin = (method, path, body, opts) => api(method, PLUGIN_BASE + path, body, opts);
-      const accountAPI = (path, opts) => api("GET", ACCOUNT_BASE + path, null, { ...opts, raw: true });
 
       function usd(value) {
         const amount = Number(value || 0);
@@ -3636,10 +3232,8 @@
       async function fail(err) {
         if (err instanceof StaleRequestError) return;
         if (err instanceof AuthError) {
-          const role = currentRole || loginMode;
           const generation = sessionGeneration;
-          await deleteCredential(role);
-          if (generation === sessionGeneration) showGate(role, err.message);
+          if (generation === sessionGeneration) showGate(err.message);
           return;
         }
         notify(err.message || String(err), "err");
@@ -3733,54 +3327,36 @@
         return value.slice(0, 6) + "…" + value.slice(-4);
       }
 
-      async function setLoginMode(mode, preserveError) {
-        const ticket = ++loginModeRequest;
-        loginMode = mode === "account" ? "account" : "admin";
-        const route = pageRoute();
-        const tab = route.role === loginMode ? route.tab : loginMode === "account" ? "subscription" : "keys";
-        writePageRoute(loginMode, tab);
-        const account = loginMode === "account";
-        setText(document.querySelector("title"), m(account ? "ui.api_key_usage" : "ui.api_key_billing"));
-        $("gate-mode-admin").classList.toggle("active", !account);
-        $("gate-mode-admin").setAttribute("aria-selected", String(!account));
-        $("gate-mode-account").classList.toggle("active", account);
-        $("gate-mode-account").setAttribute("aria-selected", String(account));
-        setText($("gate-key-label"), account ? "API Key" : m("ui.management_key"));
-        $("gate-username").value = account ? "api-key" : "administrator";
-        setTextAttribute($("gate-key"), "placeholder", account ? m("ui.enter_api_key") : m("ui.enter_management_key"));
-        setText($("gate-submit"), account ? m("ui.view_my_usage") : m("ui.open_management_console"));
+      function setLoginMode() {
+        writePageRoute("admin", pageRoute().tab);
+        setText(document.querySelector("title"), m("ui.api_key_billing"));
+        setText($("gate-key-label"), m("ui.management_key"));
+        setTextAttribute($("gate-key"), "placeholder", m("ui.enter_management_key"));
+        setText($("gate-submit"), m("ui.open_management_console"));
         $("gate-key").value = "";
-        if (!preserveError) {
-          setText($("gate-error"), "");
-          $("gate-error").className = "notice err";
-        }
-        const saved = await recalledCredential(loginMode);
-        if (ticket !== loginModeRequest) return;
-        if (saved) setTextAttribute($("gate-key"), "placeholder", m("ui.key_remembered"));
-        $("gate-remember").checked = !!saved;
+        setText($("gate-error"), "");
+        $("gate-error").className = "notice err";
       }
 
-      function showGate(mode, error) {
+      function showGate(error) {
         sessionGeneration++;
         hideNotice();
         hideCostTooltip();
-        try { sessionStorage.removeItem(SESSION_CREDENTIAL_PREFIX + mode); } catch (_) {}
         for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
         for (const controller of activeRequests) controller.abort();
         if (currentRole) {
-          clearCredentialScope(currentRole === "account");
-          resetRoleData(currentRole);
+          clearCredentialScope();
+          resetRoleData();
         }
         authKey = "";
         currentRole = "";
         document.body.classList.remove("privacy-masked");
         $("app").classList.add("hidden");
-        $("account-app").classList.add("hidden");
         $("gate").classList.remove("hidden");
         const box = $("gate-error");
         setText(box, error || "");
         box.className = error ? "notice err show" : "notice err";
-        setLoginMode(mode, true);
+        setLoginMode();
       }
 
       function requireObject(value, label) {
@@ -4086,7 +3662,7 @@
         return result;
       }
 
-      async function fetchModelPrices(models, account) {
+      async function fetchModelPrices(models) {
         const batches = [];
         let query = new URLSearchParams();
         for (const model of models) {
@@ -4101,9 +3677,9 @@
         if (query.size || !batches.length) batches.push(query);
         const prices = new Map();
         for (const [index, batch] of batches.entries()) {
-          batch.set("include_custom", String(!account && index === 0));
+          batch.set("include_custom", String(index === 0));
           const path = "/prices?" + batch.toString();
-          const rows = await (account ? accountAPI(path) : plugin("GET", path));
+          const rows = await plugin("GET", path);
           for (const row of requireArray(rows, m("ui.model_prices"))) {
             if (!row || typeof row.model_id !== "string") throw new UIError(m("ui.invalid_model_price_response"));
             const key = row.model_id.toLowerCase();
@@ -4119,21 +3695,20 @@
         return parseConfiguredAPIKeys(result);
       }
 
-      async function fetchModels(account, key) {
-        const result = await api("GET", "/v1/models", null, { raw: true, key, auxiliaryCredential: !account });
+      async function fetchModels(key) {
+        const result = await api("GET", "/v1/models", null, { raw: true, key, auxiliaryCredential: true });
         const rows = requireArray(result?.data, m("ui.cpa_model_list"));
         if (rows.some((row) => !row || typeof row.id !== "string" || !row.id.trim())) throw new UIError(m("ui.invalid_cpa_model_list"));
         const models = [...new Set(rows.map((row) => row.id))].sort(compareModelId);
-        const previous = resources[account ? "account" : "admin"].models.value;
+        const previous = resources.admin.models.value;
         // The model list is the catalog's input. Preserve its identity when
         // discovery returns the same IDs, even if their server order changed.
         return previous?.length === models.length && previous.every((model, index) => model === models[index]) ? previous : models;
       }
 
-      async function fetchCatalog(account) {
-        const models = resources[account ? "account" : "admin"].models.value;
-        if (account && models === null) throw new UIError(m("ui.model_catalog_is_not_available_yet"));
-        const prices = await fetchModelPrices(models || [], account);
+      async function fetchCatalog() {
+        const models = resources.admin.models.value;
+        const prices = await fetchModelPrices(models || []);
         return { models, prices: prices.map((price) => ({ ...price, in_models: models === null ? undefined : price.in_models })) };
       }
 
@@ -4155,20 +3730,6 @@
         );
       }
 
-      async function fetchAccountData(name) {
-        const result = requireObject(await accountAPI("/" + name), name);
-        if (name === "profile" && typeof result.tracked !== "boolean") throw new UIError(m("ui.invalid_account_profile_response"));
-        if (name === "subscription") {
-          requireObject(result.subscription, m("ui.subscription"));
-          requireObject(result.concurrency, m("ui.concurrency_status"));
-        }
-        if (name === "routing") {
-          requireArray(result.models, m("ui.model_permissions"));
-          requireArray(result.credentials, m("ui.credential_permissions"));
-        }
-        return result;
-      }
-
       function recentTimeRange(mode) {
         const to = new Date();
         const value = Number.parseInt(mode, 10);
@@ -4187,52 +3748,44 @@
         return { from: today.toISOString(), to: now.toISOString() };
       }
 
-      function selectedRange(account) {
-        const range = sharedTimeRanges[account ? "account" : "admin"];
+      function selectedRange() {
+        const range = sharedTimeRanges.admin;
         if (range.mode === "custom") { return { from: range.from, to: range.to }; }
         if (range.mode === "today" || range.mode === "yesterday") { return naturalTimeRange(range.mode); }
         return recentTimeRange(range.mode);
       }
 
-      function readAnalysis(account, reload) {
-        const role = account ? "account" : "admin";
-        const range = selectedRange(account);
+      function readAnalysis(reload) {
+        const range = selectedRange();
         const params = new URLSearchParams(range);
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-        const key = account ? "" : $("analysis-key").value;
+        const key = $("analysis-key").value;
         params.set("timezone", timezone);
         if (key) params.set("api_key", key);
-        const selection = JSON.stringify([sharedTimeRanges[role], key, timezone]);
-        return analysisQueries[role].read(
+        const selection = JSON.stringify([sharedTimeRanges.admin, key, timezone]);
+        return analysisQueries.admin.read(
           selection,
           async () => {
             const revision = keyDirectory.beginRead();
-            const value = requireObject(
-              await (account ? accountAPI("/analysis?" + params) : plugin("GET", "/analysis?" + params)),
-              m("ui.analysis")
-            );
+            const value = requireObject(await plugin("GET", "/analysis?" + params), m("ui.analysis"));
             requireObject(value.summary, m("ui.analysis_summary"));
             requireObject(value.trends, m("ui.analysis_trends"));
             requireObject(value.summary.cost, m("ui.cost_analysis"));
             for (const name of ["requests", "total_tokens", "total_cost", "cache_rate"])
               requireArray(value.trends[name], m("ui.analysis_trends"));
-            if (!account) {
-              const distribution = requireObject(value.usage_distribution, m("ui.usage_distribution"));
-              distribution.api_keys = keyDirectory.receive(
-                requireArray(distribution.api_keys, m("ui.api_key_usage_distribution")),
-                revision,
-                { field: "key", fallback: true }
-              );
-            }
+            const distribution = requireObject(value.usage_distribution, m("ui.usage_distribution"));
+            distribution.api_keys = keyDirectory.receive(
+              requireArray(distribution.api_keys, m("ui.api_key_usage_distribution")),
+              revision,
+              { field: "key", fallback: true }
+            );
             return value;
           },
           reload
         );
       }
 
-      function activeTab(account) {
-        return account ? accountTab : document.querySelector(".tabs button[data-tab].active")?.dataset.tab || "keys";
-      }
+      function activeTab() { return document.querySelector(".tabs button[data-tab].active")?.dataset.tab || "keys"; }
 
       const TAB_BARS = Array.from(document.querySelectorAll(".tabs-scroll > .tabs"));
       const PAGE_TAB_ROWS = Array.from(document.querySelectorAll(".page-tabs-row"));
@@ -4256,7 +3809,7 @@
           if (hasControls && (tabBar.scrollWidth > tabBar.clientWidth + 1 || actionsOverflow)) { row.classList.remove("controls-inline"); }
           const card = Array.from(row.parentElement.querySelectorAll(".event-list-card")).find((card) => card.getClientRects().length);
           if (card) row.parentElement.style.setProperty("--event-list-top", card.getBoundingClientRect().top + scrollY + "px");
-          positionSharedTimePopover(!!row.closest("#account-app"));
+          positionSharedTimePopover();
           updateTabScrollHint(tabBar);
         }
       }
@@ -4268,7 +3821,7 @@
 
       addEventListener("resize", schedulePageTabLayout);
       const pageTabResizeObserver = new ResizeObserver(schedulePageTabLayout);
-      for (const header of document.querySelectorAll(".head, #admin-data-status, #account-data-status")) {
+      for (const header of document.querySelectorAll(".head, #admin-data-status")) {
         pageTabResizeObserver.observe(header, { box: "border-box" });
       }
       for (const row of PAGE_TAB_ROWS) {
@@ -4298,8 +3851,8 @@
 
       for (const tabBar of TAB_BARS) { tabBar.addEventListener("scroll", () => updateTabScrollHint(tabBar), { passive: true }); }
 
-      function dataGroupCached(account, group) {
-        const data = resources[account ? "account" : "admin"];
+      function dataGroupCached(group) {
+        const data = resources.admin;
         return (
           group.names.every((name) => data[name].value !== null || data[name].error) &&
           (!group.names.includes("catalog") || !data.catalog.value || data.catalog.value.models === data.models.value)
@@ -4309,20 +3862,18 @@
       // Groups own complete loading flows, including their upstream inputs.
       // A catalog waits for its model source and records the list it priced;
       // a changed directory does not clear a hidden page's existing prices.
-      function loadDataGroup(account, name, reload = false) {
-        const role = account ? "account" : "admin";
-        const group = resourceGroups[role][name];
+      function loadDataGroup(name, reload = false) {
+        const group = resourceGroups.admin[name];
         if (group.task) return group.task;
-        const prerequisite = group.after ? loadDataGroup(account, group.after, reload).catch((error) => error) : null;
-        if (!reload && dataGroupCached(account, group) && (!group.after || !resourceGroups[role][group.after].task))
-          return Promise.resolve();
+        const prerequisite = group.after ? loadDataGroup(group.after, reload).catch((error) => error) : null;
+        if (!reload && dataGroupCached(group) && (!group.after || !resourceGroups.admin[group.after].task)) return Promise.resolve();
         const generation = sessionGeneration;
         const load = async () => {
           const error = await prerequisite;
           if (error instanceof AuthError || error instanceof StaleRequestError) throw error;
           if (generation !== sessionGeneration) throw new StaleRequestError();
-          if (!reload && dataGroupCached(account, group)) return;
-          for (const key of group.names) resources[role][key].error = "";
+          if (!reload && dataGroupCached(group)) return;
+          for (const key of group.names) resources.admin[key].error = "";
           renderPage();
           const identityRevision = keyDirectory.beginRead();
           const values = {}, failures = [];
@@ -4332,36 +3883,20 @@
               failures.push({ key, error });
             }
           };
-          if (account) {
-            await read(name, () =>
-              name === "authFiles"
-                ? fetchAuthFiles(true)
-                : name === "models" ? fetchModels(true, authKey) : name === "catalog" ? fetchCatalog(true) : fetchAccountData(name)
-            );
-          } else if (name === "configuration") { group.syncErrors = await readAdminConfiguration(read); } else if (name === "pricing") {
+          if (name === "configuration") { group.syncErrors = await readAdminConfiguration(read); } else if (name === "pricing") {
             await settleLoads([
-              read("catalog", () => fetchCatalog(false)),
+              read("catalog", () => fetchCatalog()),
               read("priceStatus", async () => requireObject(await plugin("GET", "/prices/reference/status"), m("ui.reference_price_status"))
               )
             ]);
-          } else { await read("authFiles", () => fetchAuthFiles(false)); }
+          } else { await read("authFiles", () => fetchAuthFiles()); }
           if (generation !== sessionGeneration) throw new StaleRequestError();
-          if (account && name !== "profile" && !resources.account.profile.value?.tracked) return;
           if (values.keys) values.keys = keyDirectory.receive(values.keys, identityRevision);
-          if (values.authFiles) updateAuthFiles(account, values.authFiles);
-          for (const [key, value] of Object.entries(values)) Object.assign(resources[role][key], { value, error: "" });
-          for (const { key, error } of failures) resources[role][key].error = error.message || String(error);
-          if (values.profile?.tracked === false) {
-            for (const [key, resource] of Object.entries(resources.account)) {
-              if (key !== "profile") Object.assign(resource, { value: null, error: "" });
-            }
-            analysisQueries.account.clear();
-            for (const list of Object.values(pagedLists.account)) list.reset();
-            resetAuthQuotaMemory(true);
-            persistAuthQuotaCache(true);
-          }
+          if (values.authFiles) updateAuthFiles(values.authFiles);
+          for (const [key, value] of Object.entries(values)) Object.assign(resources.admin[key], { value, error: "" });
+          for (const { key, error } of failures) resources.admin[key].error = error.message || String(error);
         };
-        const task = !account && ["configuration", "pricing"].includes(name) ? queueAdminData(name, load) : Promise.resolve().then(load);
+        const task = ["configuration", "pricing"].includes(name) ? queueAdminData(name, load) : Promise.resolve().then(load);
         group.task = task.finally(() => {
           if (generation === sessionGeneration) {
             group.task = null;
@@ -4371,84 +3906,38 @@
         return group.task;
       }
 
-      let chartLoadPromise;
-      let chartError = "";
-      function loadCharts() {
-        if (typeof Chart === "function") return Promise.resolve();
-        if (chartLoadPromise) return chartLoadPromise;
-        chartError = "";
-        chartLoadPromise = new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          const failed = (message) => {
-            clearTimeout(timer);
-            script.onload = script.onerror = null;
-            script.remove();
-            chartLoadPromise = null;
-            chartError = message;
-            reject(new UIError(message));
-          };
-          const timer = setTimeout(() => failed(m("ui.chart_loading_timed_out")), 10000);
-          script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
-          script.onload = () => {
-            if (typeof Chart !== "function") return failed(m("ui.chart_library_failed_to_initialize"));
-            clearTimeout(timer);
-            script.onload = script.onerror = null;
-            resolve();
-          };
-          script.onerror = () => failed(m("ui.failed_to_load_charts"));
-          document.head.append(script);
-        }).finally(renderLoadedCharts);
-        return chartLoadPromise;
-      }
-
-      function renderLoadedCharts() {
-        const account = currentRole === "account";
-        if (currentRole && activeTab(account) === "analysis" && analysisQueries[currentRole].value) renderAnalysis(account);
-      }
-
       // A page owns both its displays and its editors. Loading and refresh use
       // their union; rendering uses only each display's own dependencies.
-      function createPages(role) {
-        const account = role === "account";
+      function createPages() {
         const data = {
-          ...resources[role],
-          analysis: analysisQueries[role],
+          ...resources.admin,
+          analysis: analysisQueries.admin,
           eventKeys: eventKeysQuery,
           keyDirectory,
-          ...Object.fromEntries(Object.entries(pagedLists[role]).map(([name, list]) => [name, list.query]))
+          ...Object.fromEntries(Object.entries(pagedLists.admin).map(([name, list]) => [name, list.query]))
         };
         const section = (names, render) => ({ sources: names.map((name) => data[name]), render, displayed: null });
-        const keyedSection = (names, render) => section(account ? names : [...names, "keyDirectory"], render);
+        const keyedSection = (names, render) => section([...names, "keyDirectory"], render);
         const result = {
           analysis: { query: "analysis", sections: [] },
-          "request-events": { query: "events", sections: [keyedSection(["events"], () => renderRequestEvents(account))] },
-          errors: { query: "errors", sections: [keyedSection(["errors"], () => renderErrors(account))] },
-          "auth-files": { sections: [section(["authFiles"], () => renderAuthFiles(account))] }
+          "request-events": { query: "events", sections: [keyedSection(["events"], () => renderRequestEvents())] },
+          errors: { query: "errors", sections: [keyedSection(["errors"], () => renderErrors())] },
+          "auth-files": { sections: [section(["authFiles"], () => renderAuthFiles())] }
         };
-        if (account) {
-          result.subscription = {
-            sections: [
-              section(["subscription"], renderAccountSubscription),
-              section(["models", "catalog", "routing"], renderAccountModels),
-              section(["routing"], renderAccountRouting)
-            ]
-          };
-        } else {
-          const keyFilter = keyedSection(["eventKeys"], renderEventKeys);
-          for (const tab of ["analysis", "request-events", "errors"]) result[tab].sections.unshift(keyFilter);
-          result.keys = { editors: ["route"], sections: [keyedSection(["keys", "plans", "routes", "credentials"], renderKeys)] };
-          result.settings = {
-            editors: ["plan", "route"],
-            query: "logs",
-            sections: [
-              keyedSection(["plans", "keys"], renderPlans),
-              keyedSection(["routes", "keys", "credentials"], renderRoutes),
-              section(["catalog"], renderPriceTable),
-              section(["priceStatus", "catalog"], renderReferencePriceStatus),
-              section(["logs"], renderPluginLogs)
-            ]
-          };
-        }
+        const keyFilter = keyedSection(["eventKeys"], renderEventKeys);
+        for (const tab of ["analysis", "request-events", "errors"]) result[tab].sections.unshift(keyFilter);
+        result.keys = { editors: ["route"], sections: [keyedSection(["keys", "plans", "routes", "credentials"], renderKeys)] };
+        result.settings = {
+          editors: ["plan", "route"],
+          query: "logs",
+          sections: [
+            keyedSection(["plans", "keys"], renderPlans),
+            keyedSection(["routes", "keys", "credentials"], renderRoutes),
+            section(["catalog"], renderPriceTable),
+            section(["priceStatus", "catalog"], renderReferencePriceStatus),
+            section(["logs"], renderPluginLogs)
+          ]
+        };
         for (const page of Object.values(result)) {
           page.sources = [...new Set(page.sections.flatMap((section) => section.sources))];
           for (const editor of page.editors || []) {
@@ -4456,60 +3945,46 @@
           }
           if (page.sources.includes(data.catalog) && !page.sources.includes(data.models)) page.sources.push(data.models);
           if (page.query === "analysis") page.sources.push(data.analysis);
-          page.groups = Object.entries(resourceGroups[role])
+          page.groups = Object.entries(resourceGroups.admin)
             .filter(([, group]) => group.names.some((name) => page.sources.includes(data[name])))
             .map(([name]) => name);
-          if (account) page.sources.unshift(data.profile);
           page.task = null;
         }
-        if (account) result["auth-files"].sections[0].sources.push(data.profile);
         return result;
       }
-      const pages = { admin: createPages("admin"), account: createPages("account") };
+      const pages = { admin: createPages() };
 
-      function currentPage() { return currentRole ? pages[currentRole][activeTab(currentRole === "account")] : null; }
+      function currentPage() { return currentRole ? pages[currentRole][activeTab()] : null; }
 
       // Cached navigation only paints changed sections. A refresh retains the
       // existing DOM until new data arrives; hidden pages are painted on entry.
       function renderPage() {
         const page = currentPage();
         if (!page) return;
-        const account = currentRole === "account";
         updateRefreshButtons();
         renderDataNotice();
-        if (account && !renderAccountProfile()) return;
         for (const section of page.sections) {
           const values = [locale(), ...section.sources.flatMap((source) => [source.value, source.value === null ? source.error : ""])];
           if (section.displayed?.every((value, index) => value === values[index])) continue;
           if (section.render() !== false) section.displayed = values;
         }
-        // Charts also depend on theme and library availability, and retain
-        // their own canvas/update state across navigation and resizing.
-        if (page.query === "analysis") renderAnalysis(account);
+        if (page.query === "analysis") renderAnalysis();
         else if (page.query) {
-          const list = pagedList(page.query, account);
+          const list = pagedList(page.query);
           if (list.data) list.renderStatus();
         }
       }
 
-      function loadPage(account, { reload = false } = {}) {
-        const role = account ? "account" : "admin";
-        const page = pages[role][activeTab(account)];
+      function loadPage({ reload = false } = {}) {
+        const page = pages.admin[activeTab()];
         const generation = sessionGeneration;
         const task = (async () => {
-          if (account) await loadDataGroup(true, "profile", reload);
           if (generation !== sessionGeneration || currentPage() !== page) return;
           const tasks = [];
-          if (!account || resources.account.profile.value?.tracked) {
-            tasks.push(...page.groups.map((name) => loadDataGroup(account, name, reload)));
-            if (page.sources.includes(eventKeysQuery)) tasks.push(readEventKeys(reload));
-            if (page.query === "analysis") {
-              tasks.push(readAnalysis(account, reload));
-              if (typeof Chart !== "function" && (!chartError || reload)) tasks.push(loadCharts());
-            } else if (page.query) {
-              const list = pagedList(page.query, account);
-              tasks.push(list.load(reload));
-            }
+          tasks.push(...page.groups.map((name) => loadDataGroup(name, reload)));
+          if (page.sources.includes(eventKeysQuery)) tasks.push(readEventKeys(reload));
+          if (page.query === "analysis") { tasks.push(readAnalysis(reload)); } else if (page.query) {
+            tasks.push(pagedList(page.query).load(reload));
           }
           renderPage();
           try { await settleLoads(tasks); } catch (error) {
@@ -4530,9 +4005,8 @@
       function renderDataNotice() {
         const page = currentPage();
         if (!page) return;
-        const account = currentRole === "account";
         // Paged lists display their own loading and error states.
-        const listQuery = pagedLists[currentRole][page.query]?.query;
+        const listQuery = pagedLists.admin[page.query]?.query;
         const visible = page.sources.filter((source) => source !== listQuery);
         const errors = visible.filter((source) => source.error).map((source) =>
           m("ui.resource_error", {
@@ -4541,8 +4015,8 @@
             v2: source.value !== null ? m("ui.showing_the_last_successful_data") : ""
           })
         );
-        if (!account && page.groups.includes("configuration")) errors.push(...resourceGroups.admin.configuration.syncErrors);
-        const target = $(account ? "account-data-status" : "admin-data-status");
+        if (page.groups.includes("configuration")) errors.push(...resourceGroups.admin.configuration.syncErrors);
+        const target = $("admin-data-status");
         target.classList.toggle("show", !!errors.length);
         target.replaceChildren(
           ...(errors.length
@@ -4563,227 +4037,15 @@
         const generation = sessionGeneration;
         currentRole = "admin";
         authKey = key;
-        await activateCredentialScope(false, key);
+        await activateCredentialScope(key);
         if (generation !== sessionGeneration) throw new StaleRequestError();
-        restoreRolePreferences("admin");
+        restoreRolePreferences();
         const route = pageRoute();
-        setAdminTab(route.role === "admin" ? route.tab : "keys");
+        setAdminTab(route.tab);
         $("gate").classList.add("hidden");
-        $("account-app").classList.add("hidden");
         $("app").classList.remove("hidden");
         schedulePageTabLayout();
-        await loadPage(false).catch(fail);
-      }
-
-      async function startAccount(key) {
-        setText(document.querySelector("title"), m("ui.api_key_usage"));
-        const generation = sessionGeneration;
-        currentRole = "account";
-        authKey = key;
-        // CLIProxyAPI remains authoritative for whether this downstream key is
-        // currently valid. The plugin endpoint only uses the key to select its hash.
-        resources.account.models.value = await fetchModels(true, key);
-        await activateCredentialScope(true, key);
-        if (generation !== sessionGeneration) throw new StaleRequestError();
-        restoreRolePreferences("account");
-        $("gate").classList.add("hidden");
-        $("app").classList.add("hidden");
-        $("account-app").classList.remove("hidden");
-        setText($("account-identity"), previewCredential(key));
-        const route = pageRoute();
-        setAccountTab(route.role === "account" ? route.tab : "subscription");
-        await loadPage(true).catch(fail);
-        schedulePageTabLayout();
-      }
-
-      function setAccountTab(tab) {
-        accountTab = ACCOUNT_TAB_IDS.includes(tab) ? tab : "subscription";
-        writePageRoute("account", accountTab);
-        document.querySelectorAll("[data-account-tab]").forEach((button) => {
-          const active = button.dataset.accountTab === accountTab;
-          button.classList.toggle("active", active);
-          button.setAttribute("aria-selected", String(active));
-        });
-        for (const name of ACCOUNT_TAB_IDS) { $("account-tab-" + name).classList.toggle("hidden", name !== accountTab); }
-        $("account-shared-time-filter").classList.toggle("hidden", !["analysis", "request-events", "errors"].includes(accountTab));
-        $("account-events-export").classList.toggle("hidden", !["request-events", "errors"].includes(accountTab));
-        if (!["analysis", "request-events", "errors"].includes(accountTab)) { closeSharedTimePopover(true); }
-        schedulePageTabLayout();
-        revealTab(document.querySelector(`[data-account-tab="${accountTab}"]`));
-      }
-
-      function renderAccountProfile() {
-        const profile = resources.account.profile.value;
-        const tracked = profile?.tracked === true;
-        $("account-untracked").classList.toggle("hidden", !profile || tracked);
-        $("account-content").classList.toggle("hidden", !tracked);
-        if (tracked) $("account-identity").replaceChildren(displayText(apiKeyIdentity(profile.identity || {}).text));
-        else closeSharedTimePopover(true);
-        return tracked;
-      }
-
-      function renderAccountSubscription() {
-        const data = resources.account.subscription;
-        const subscription = data.value?.subscription || {};
-        const concurrency = data.value?.concurrency || {};
-        setText(
-          $("account-concurrency"),
-          !data.value ? "—" : int(concurrency.current) + " / " + (Number(concurrency.limit || 0) > 0 ? int(concurrency.limit) : "∞")
-        );
-        setText(
-          $("account-plan-name"),
-          !data.value
-            ? m("ui.subscription_quota")
-            : displayLabel(subscription.name || (subscription.unlimited ? m("ui.no_subscription_plan") : m("ui.subscription_quota")))
-        );
-        $("account-plan-status").className = "tag " + (subscription.blocked ? "bad" : "plain");
-        setText(
-          $("account-plan-status"),
-          !data.value ? "" : subscription.unlimited ? m("ui.unlimited") : subscription.blocked ? m("ui.quota_exhausted") : m("ui.active")
-        );
-        const target = $("account-windows");
-        if (renderDataPending(target, [data], m("ui.loading_subscription_status"))) return;
-        target.replaceChildren(renderQuotaWindows(subscription, true));
-      }
-
-      function renderAccountModels() {
-        const data = resources.account;
-        const target = $("account-models");
-        if (renderDataPending(target, [data.models, data.catalog, data.routing], m("ui.loading_model_prices"))) return;
-        const access = data.routing.value;
-        const directory = data.models.value;
-        const modelScope = new Set(access.models.map((model) => model.toLowerCase()));
-        const deniedModels = new Set((access.denied_models || []).map((model) => model.toLowerCase()));
-        const models = (
-          access.routing_valid === false
-            ? []
-            : !modelScope.size
-              ? directory
-              : directory.length ? directory.filter((model) => modelScope.has(model.toLowerCase())) : access.models
-        )
-          .filter((model) => !deniedModels.has(model.toLowerCase()))
-          .slice()
-          .sort(compareModelId);
-        renderCollection(target, models, {
-          attrs: { class: "display-contents" },
-          empty: m("ui.no_model_prices"),
-          render: renderAccountModel
-        });
-      }
-
-      function renderAccountRouting() {
-        const data = resources.account.routing;
-        const target = $("account-access");
-        if (renderDataPending(target, [data], m("ui.loading_routing_permissions"))) return;
-        target.replaceChildren(renderAccountAccess(data.value));
-      }
-
-      function renderAccountAccess(access) {
-        const routingValid = access.routing_valid !== false;
-        const accountCredentialLabel = (item, state) => {
-          const name = window.billingI18n.serverMessage(item.name_message, item.name);
-          return {
-            text: item.provider_wide
-              ? credentialProviderLabel(item)
-              : item.status === "missing"
-                ? name ? maskedLabelText(name) : m("ui.the_selected_upstream_credential_is_currently_unavailable")
-                : maskedTailText(item.provider, name || m("ui.credential_unavailable")),
-            tag: item.provider_wide ? m("ui.entire_category") : "",
-            iconName: credentialIcon(item),
-            state: item.denied ? "deny" : state
-          };
-        };
-        const deniedModels = new Set((access.denied_models || []).map((model) => model.toLowerCase()));
-        const modelItems = access.models.map((text) => ({
-          text,
-          state: deniedModels.has(text.toLowerCase()) ? "deny" : "allow",
-          iconName: "astroid"
-        }));
-        if (!modelItems.length) modelItems.push({ text: routingValid ? m("ui.all_models") : m("ui.unknown"), iconName: "astroid" });
-        for (const text of access.denied_models || [])
-          if (!access.models.some((model) => model.toLowerCase() === text.toLowerCase()))
-            modelItems.push({ text, state: "deny", iconName: "astroid" });
-        const credentialItems = access.credentials.map((item) => accountCredentialLabel(item, "allow"));
-        if (!credentialItems.length) credentialItems.push({ text: routingValid ? m("ui.all_credentials") : m("ui.unknown") });
-        const credentialKey = (item) => JSON.stringify([item.source, item.provider, !!item.provider_wide, item.name]);
-        const deniedCredentials = new Set(access.credentials.filter((item) => item.denied).map(credentialKey));
-        for (const item of access.denied_credentials || []) {
-          const key = credentialKey(item);
-          if (deniedCredentials.has(key)) continue;
-          deniedCredentials.add(key);
-          credentialItems.push(accountCredentialLabel(item, "deny"));
-        }
-        const nodes = [
-          el(
-            "div",
-            { class: "account-access-summary" },
-            el(
-              "div",
-              { class: "auth-file-card" },
-              el("div", { class: "account-access-scope-label", text: m("ui.model_access") }),
-              settingsChipList(modelItems)
-            ),
-            el(
-              "div",
-              { class: "auth-file-card" },
-              el("div", { class: "account-access-scope-label", text: m("ui.credential_access") }),
-              settingsChipList(credentialItems)
-            )
-          )
-        ];
-        if (access.warnings?.length)
-          nodes.push(
-            el(
-              "div",
-              { class: "account-access-warnings" },
-              access.warnings.map((warning, index) =>
-                el("span", { class: "tag warn", text: window.billingI18n.serverMessage(access.warning_messages?.[index], warning) })
-              )
-            )
-          );
-        return el("div", { class: "display-contents" }, nodes);
-      }
-
-      function renderAccountModel(model) {
-        const candidate = resources.account.catalog.value.prices.find((price) => price.model_id.toLowerCase() === model.toLowerCase());
-        const price = candidate?.source === "none" ? null : candidate;
-        const fields = [[m("ui.input"), "input_per_1m"], [m("ui.output"), "output_per_1m"]];
-        const longContext = price?.long_context;
-        for (const [label, field] of [[m("ui.cache_read"), "cache_read_per_1m"], [m("ui.cache_write"), "cache_write_per_1m"]]) {
-          if (price?.[field] != null || longContext?.[field] != null) fields.push([label, field]);
-        }
-        const threshold = longContext ? ">" + tokenThreshold(longContext.threshold_input_tokens) : "";
-        const priceRows = price
-          ? fields.map(([label, field]) => ({
-              label,
-              base: price[field] == null ? null : Number(price[field]),
-              long: longContext?.[field] == null ? null : Number(longContext[field])
-            }))
-          : [];
-        const priceRow = (item) =>
-          el(
-            "div",
-            { class: "account-model-price-row" + (longContext ? " tiered" : "") },
-            el("span", { class: "account-model-price-label" }, item.label),
-            el("strong", { class: "mono account-model-base-price" }, item.base == null ? "—" : usd(item.base)),
-            longContext
-              ? el(
-                  "span",
-                  { class: "account-model-long-price" },
-                  item.long != null
-                    ? [el("span", { class: "account-model-threshold" }, threshold), el("strong", { class: "mono" }, usd(item.long))]
-                    : el("span", { class: "muted" }, "—")
-                )
-              : null
-          );
-        return el(
-          "div",
-          { class: "account-model-card" },
-          el("b", { class: "mono account-model-name", title: model }, model),
-          price
-            ? el("div", { class: "account-model-price-list" }, priceRows.map(priceRow))
-            : el("span", { class: "muted small", text: m("ui.no_price_configured_currently_unavailable") })
-        );
+        await loadPage().catch(fail);
       }
 
       const ANALYSIS_COLOR_PROPERTIES = [
@@ -4794,52 +4056,64 @@
         "--analysis-color-5",
         "--analysis-color-6"
       ];
-      const analysisDimensions = { admin: "api_keys", account: "models" };
-      const analysisMetrics = { admin: "total_tokens", account: "total_tokens" };
+      const analysisDimensions = { admin: "api_keys" };
+      const analysisMetrics = { admin: "total_tokens" };
       const DISTRIBUTION_METRICS = {
         total_tokens: { label: m("ui.total_tokens"), option: m("ui.token_share"), format: (row) => tokens(row.total_tokens) },
         requests: { label: m("ui.requests_4"), option: m("ui.request_share"), format: (row) => int(row.requests) },
         cost_usd: { label: m("ui.total_cost"), option: m("ui.cost_share"), format: (row) => usd(row.cost_usd) }
       };
-      const analysisCharts = {
-        admin: { trend: null, distribution: null, rendered: null },
-        account: { trend: null, distribution: null, rendered: null }
-      };
+      const analysisRendered = { rendered: null };
 
-      function destroyAnalysisCharts(account) {
-        const role = account ? "account" : "admin";
-        for (const chart of [analysisCharts[role].trend, analysisCharts[role].distribution]) chart?.destroy();
-        analysisCharts[role].trend = null;
-        analysisCharts[role].distribution = null;
-        analysisCharts[role].rendered = null;
-        $(account ? "account-analysis-body" : "analysis-body").replaceChildren();
+      function destroyAnalysisCharts() {
+        analysisRendered.rendered = null;
+        $("analysis-body").replaceChildren();
       }
 
-      function analysisChartPanel(className, id, label) {
+      const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+      function svgNode(tag, attrs = {}, ...children) {
+        const node = document.createElementNS(SVG_NAMESPACE, tag);
+        for (const [name, value] of Object.entries(attrs)) {
+          if (value === null || value === undefined || value === false) continue;
+          node.setAttribute(name, String(value));
+        }
+        for (const child of children.flat()) if (child !== null && child !== undefined) node.append(child);
+        return node;
+      }
+
+      function svgLabel(x, y, value, attrs = {}) { return svgNode("text", { x, y, ...attrs }, String(value)); }
+
+      // Round a maximum up to a readable axis step so grid labels stay tidy.
+      function chartTicks(maximum, count = 4) {
+        if (!(maximum > 0)) return [0, 1];
+        const raw = maximum / count;
+        const magnitude = 10 ** Math.floor(Math.log10(raw));
+        const step = Math.max(magnitude, Math.ceil(raw / magnitude) * magnitude);
+        const ticks = [];
+        for (let value = 0; value <= maximum + step * 0.001 && ticks.length < 12; value += step) ticks.push(value);
+        return ticks.length > 1 ? ticks : [0, maximum];
+      }
+
+      function chartLegendEntry(label, color) {
         return el(
-          "div",
-          { class: className },
-          el("canvas", { id, role: "img", "aria-label": label }),
-          el("div", { class: "empty hidden" })
+          "span",
+          { class: "usage-trend-legend-item", style: "--legend-color:" + color },
+          el("i", { class: "usage-trend-legend-dot", "aria-hidden": "true" }),
+          label
         );
       }
 
-      // The canvas and Chart instance belong to the page, not to a response.
-      // Replacing options also replaces tooltip callbacks with the current data.
-      function updateAnalysisChart(account, kind, canvas, config, { empty = "", animate = false } = {}) {
-        config = window.billingI18n.chartValue(config);
-        const charts = analysisCharts[account ? "account" : "admin"];
-        const message = empty || (typeof Chart !== "function" ? chartError || m("ui.loading_charts") : "");
-        const status = canvas.parentElement.querySelector(".empty");
-        canvas.classList.toggle("hidden", !!message);
+      // Every analysis chart owns one empty-state node that survives redraws.
+      function analysisChartPanel(className, id, label) {
+        return el("div", { class: className, id, role: "img", "aria-label": label }, el("div", { class: "empty hidden" }));
+      }
+
+      function setChartEmpty(container, message) {
+        const status = container.querySelector(".empty");
+        for (const child of [...container.children]) if (child !== status) child.remove();
         status.classList.toggle("hidden", !message);
-        setText(status, message);
-        if (message) return;
-        if (charts[kind]) {
-          charts[kind].data = config.data;
-          charts[kind].options = config.options;
-          charts[kind].update(animate ? undefined : "none");
-        } else { charts[kind] = new Chart(canvas, config); }
+        setText(status, message || "");
+        return !message;
       }
 
       function themeColor(property, fallback) {
@@ -4877,252 +4151,193 @@
 
       function namesIdentity(dimension, row) { return ["api_keys", "sources"].includes(dimension) && !!row?.key && row.key !== "other"; }
 
-      function renderUsageDistributionChart(account, rows, dimension, dimensionLabel, metric, colors, animate) {
-        const canvas = $(account ? "account-usage-chart" : "usage-chart");
-        canvas.setAttribute(
+      function distributionName(row, dimension) {
+        if (dimension === "api_keys" && row.key !== "other") return apiKeyIdentity(row).text;
+        return row.label || row.key || m("ui.unknown_2");
+      }
+
+      function renderUsageDistributionChart(rows, dimension, dimensionLabel, metric, colors) {
+        const container = $("usage-chart");
+        container.setAttribute(
           "aria-label",
           m("ui.value_value_doughnut_chart", { v0: dimensionLabel, v1: DISTRIBUTION_METRICS[metric].option })
         );
         const empty = rows.some((row) => row.percent > 0)
           ? ""
           : m("ui.value_is_zero_in_this_time_range", { v0: DISTRIBUTION_METRICS[metric].label });
-        updateAnalysisChart(
-          account,
-          "distribution",
-          canvas,
-          {
-            type: "doughnut",
-            data: {
-              labels: rows.map((row) =>
-                dimension === "api_keys" && row.key !== "other" ? apiKeyIdentity(row).text : row.label || row.key || m("ui.unknown_2")
-              ),
-              datasets: [
-                {
-                  data: rows.map((row) => row.percent),
-                  backgroundColor: rows.map((_, index) => colors[index % colors.length]),
-                  borderColor: themeColor("--analysis-segment-border", "#f0eee8"),
-                  borderWidth: 3,
-                  borderRadius: 7,
-                  spacing: 1,
-                  hoverBorderWidth: 3,
-                  hoverOffset: 8
-                }
-              ]
+        if (!setChartEmpty(container, empty)) return;
+        const size = 200;
+        const radius = 74;
+        const thickness = 26;
+        const center = size / 2;
+        const circumference = 2 * Math.PI * radius;
+        let offset = 0;
+        const segments = rows.map((row, index) => {
+          const length = (Math.max(0, row.percent) / 100) * circumference;
+          const name = privacyMasked() && namesIdentity(dimension, row) ? dimensionLabel : distributionName(row, dimension);
+          const title = [dimensionLabel + DISPLAY_SEPARATOR + name, row.percent.toFixed(2) + "%"]
+            .concat(Object.values(DISTRIBUTION_METRICS).map((item) => item.label + " " + item.format(row)))
+            .join("\n");
+          const segment = svgNode(
+            "circle",
+            {
+              cx: center,
+              cy: center,
+              r: radius,
+              fill: "none",
+              stroke: colors[index % colors.length],
+              "stroke-width": thickness,
+              "stroke-dasharray": length + " " + (circumference - length),
+              "stroke-dashoffset": -offset,
+              transform: "rotate(-90 " + center + " " + center + ")",
+              "stroke-linecap": "butt"
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: "62%",
-              layout: { padding: 12 },
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: themeColor("--floating-surface", "#2a2723"),
-                  borderColor: themeColor("--border-primary", "#4a453f"),
-                  borderWidth: 1,
-                  titleColor: themeColor("--text-primary", "#f6f4f1"),
-                  bodyColor: themeColor("--text-secondary", "#c9c3bb"),
-                  callbacks: {
-                    // Canvas text cannot be blurred, so a masked identity is left out of the tooltip entirely.
-                    title: (items) => {
-                      const row = items.length ? rows[items[0].dataIndex] : null;
-                      return row && !(privacyMasked() && namesIdentity(dimension, row))
-                        ? dimensionLabel + DISPLAY_SEPARATOR + items[0].label
-                        : dimensionLabel;
-                    },
-                    label: (context) => {
-                      const row = rows[context.dataIndex];
-                      return [
-                        DISTRIBUTION_METRICS[metric].option + " " + row.percent.toFixed(2) + "%",
-                        ...Object.values(DISTRIBUTION_METRICS).map((item) => item.label + " " + item.format(row))
-                      ];
-                    }
-                  }
-                }
-              }
-            }
-          },
-          { empty, animate }
+            svgNode("title", {}, title)
+          );
+          offset += length;
+          return segment;
+        });
+        container.append(
+          svgNode("svg", { viewBox: "0 0 " + size + " " + size, width: "100%", height: "100%", role: "presentation" }, segments)
         );
       }
 
-      function renderUsageTrendChart(account, trends, colors, daily) {
-        const canvas = $(account ? "account-usage-trend-chart" : "usage-trend-chart");
+      function renderUsageTrendChart(trends, colors, daily) {
+        const container = $("usage-trend-chart");
+        const legend = container.closest(".usage-trend-card").querySelector(".usage-trend-legend");
         const points = trends.total_tokens;
         if (!points.length) {
-          canvas.closest(".usage-trend-card").querySelector(".usage-trend-legend").replaceChildren();
-          updateAnalysisChart(account, "trend", canvas, null, { empty: m("ui.no_trend_data_in_this_time_range") });
+          legend.replaceChildren();
+          setChartEmpty(container, m("ui.no_trend_data_in_this_time_range"));
           return;
         }
-        const values = (name) => trends[name].map((point) => Number(point.value || 0));
-        const totalTokens = values("total_tokens");
-        const cacheWriteTokens = values("cache_write_tokens");
-        const average = totalTokens.reduce((sum, value) => sum + value, 0) / totalTokens.length;
+        setChartEmpty(container, "");
+        const series = [
+          { key: "input_tokens", label: m("ui.input"), color: colors[0] },
+          { key: "output_tokens", label: m("ui.output"), color: colors[2] },
+          { key: "cache_read_tokens", label: m("ui.cache_read"), color: colors[1] }
+        ];
+        const cacheWrite = trends.cache_write_tokens.map((point) => Number(point.value || 0));
+        if (cacheWrite.some((value) => value > 0)) series.push({ key: "cache_write_tokens", label: m("ui.cache_write"), color: colors[4] });
+        const width = Math.max(320, container.clientWidth || 800);
+        const height = Math.max(220, container.clientHeight || 360);
+        const narrow = width <= 520;
+        const margin = { top: 18, right: narrow ? 14 : 62, bottom: 34, left: 56 };
+        const plotWidth = width - margin.left - margin.right;
+        const plotHeight = height - margin.top - margin.bottom;
+        const valueAt = (key, index) => Number(trends[key][index]?.value || 0);
+        const totals = points.map((_, index) => series.reduce((sum, item) => sum + valueAt(item.key, index), 0));
+        const ticks = chartTicks(Math.max(1, ...totals));
+        const axisMax = ticks[ticks.length - 1] || 1;
+        const xAt = (index) => margin.left + (points.length === 1 ? plotWidth / 2 : (index * plotWidth) / (points.length - 1));
+        const yAt = (value) => margin.top + plotHeight - (Number(value || 0) / axisMax) * plotHeight;
+        const barWidth = Math.max(2, Math.min(42, (plotWidth / points.length) * 0.72));
+        const gridColor = themeColor("--analysis-grid-color", "rgba(45, 42, 38, 0.08)");
+        const textColor = themeColor("--text-tertiary", "#8b95a6");
         const labelFormat = new Intl.DateTimeFormat(
           locale(),
           daily ? { month: "numeric", day: "numeric" } : { hour: "2-digit", minute: "2-digit", hour12: false }
         );
-        const labels = points.map((point) => labelFormat.format(new Date(point.time)));
-        const textColor = themeColor("--text-tertiary", "#8b95a6");
-        const tokenDataset = (label, data, color) => ({
-          type: "bar",
-          label,
-          data,
-          yAxisID: "tokens",
-          stack: "tokens",
-          metric: "tokens",
-          backgroundColor: color,
-          borderColor: color,
-          borderWidth: 0,
-          borderRadius: 0,
-          maxBarThickness: 42,
-          categoryPercentage: 0.76,
-          barPercentage: 0.9
-        });
-        const datasets = [
-          tokenDataset(m("ui.input"), values("input_tokens"), colors[0]),
-          tokenDataset(m("ui.output"), values("output_tokens"), colors[2]),
-          tokenDataset(m("ui.cache_read"), values("cache_read_tokens"), colors[1])
-        ];
-        if (cacheWriteTokens.some((value) => value > 0)) { datasets.push(tokenDataset(m("ui.cache_write"), cacheWriteTokens, colors[4])); }
-        datasets.push({
-          type: "line",
-          label: m("ui.requests_4"),
-          data: values("requests"),
-          yAxisID: "requests",
-          metric: "requests",
-          borderColor: "#ff6048",
-          backgroundColor: "#ff6048",
-          borderWidth: 2.5,
-          borderDash: [7, 5],
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          tension: 0.38
-        });
-        const costs = values("total_cost");
-        if (costs.length) {
-          datasets.push({
-            type: "line",
-            label: m("ui.total_cost"),
-            data: costs,
-            yAxisID: "cost",
-            metric: "cost",
-            borderColor: colors[5],
-            backgroundColor: colors[5],
-            borderWidth: 2.5,
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            tension: 0.38
-          });
+        const parts = [];
+        for (const tick of ticks) {
+          const y = yAt(tick);
+          parts.push(svgNode("line", { x1: margin.left, x2: margin.left + plotWidth, y1: y, y2: y, stroke: gridColor, "stroke-width": 1 }));
+          parts.push(svgLabel(margin.left - 8, y + 4, tokens(tick), { fill: textColor, "text-anchor": "end", "font-size": 11 }));
         }
-        datasets.push({
-          type: "line",
-          label: m("ui.average_value", { v0: tokens(average) }),
-          data: totalTokens.map(() => average),
-          yAxisID: "tokens",
-          stack: "average",
-          metric: "average",
-          borderColor: textColor,
-          borderWidth: 1.5,
-          borderDash: [5, 5],
-          pointRadius: 0,
-          pointHoverRadius: 0
-        });
-        const narrow = canvas.parentElement.clientWidth <= 520;
-        const gridColor = themeColor("--analysis-grid-color", "rgba(45, 42, 38, 0.08)");
-        const legend = canvas.closest(".usage-trend-card").querySelector(".usage-trend-legend");
-        legend.replaceChildren(
-          ...datasets.map((dataset) =>
-            el(
-              "span",
-              { class: "usage-trend-legend-item", style: "--legend-color:" + dataset.borderColor },
-              el("i", { class: "usage-trend-legend-dot", "aria-hidden": "true" }),
-              dataset.label
-            )
-          )
-        );
-        updateAnalysisChart(account, "trend", canvas, {
-          type: "bar",
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 300 },
-            onResize: (chart, size) => {
-              const compact = size.width <= 520;
-              chart.options.scales.x.ticks.maxTicksLimit = compact ? 4 : 8;
-              chart.options.scales.requests.display = !compact;
-              chart.options.scales.cost.display = !compact && costs.length > 0;
-            },
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: themeColor("--floating-surface", "#2a2723"),
-                borderColor: themeColor("--border-primary", "#4a453f"),
-                borderWidth: 1,
-                titleColor: themeColor("--text-primary", "#f6f4f1"),
-                bodyColor: themeColor("--text-secondary", "#c9c3bb"),
-                footerColor: themeColor("--text-primary", "#f6f4f1"),
-                usePointStyle: true,
-                boxWidth: 8,
-                boxHeight: 8,
-                boxPadding: 6,
-                filter: (context) => context.dataset.metric !== "average",
-                callbacks: {
-                  labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
-                  label: (context) => {
-                    const value = Number(context.raw || 0);
-                    if (context.dataset.metric === "requests") { return context.dataset.label + ": " + int(value); }
-                    if (context.dataset.metric === "cost") { return context.dataset.label + ": " + usd(value); }
-                    return context.dataset.label + ": " + tokens(value);
-                  },
-                  footer: (items) => (items.length ? m("ui.total_tokens_value", { v0: tokens(totalTokens[items[0].dataIndex]) }) : "")
-                }
-              }
-            },
-            scales: {
-              x: {
-                stacked: true,
-                grid: { display: false, drawTicks: false },
-                border: { color: gridColor },
-                ticks: { color: textColor, maxRotation: 0, autoSkip: true, maxTicksLimit: narrow ? 4 : 8 }
-              },
-              tokens: {
-                stacked: true,
-                beginAtZero: true,
-                grid: { color: gridColor },
-                border: { color: gridColor },
-                ticks: { color: textColor, maxTicksLimit: 5, callback: (value) => tokens(value) }
-              },
-              requests: {
-                beginAtZero: true,
-                position: "right",
-                display: !narrow,
-                grid: { drawOnChartArea: false },
-                ticks: { color: textColor, precision: 0 }
-              },
-              cost: {
-                beginAtZero: true,
-                position: "right",
-                display: !narrow && costs.length > 0,
-                grid: { drawOnChartArea: false },
-                ticks: { color: textColor, callback: (value) => usd(value) }
-              }
-            }
+        points.forEach((point, index) => {
+          let base = margin.top + plotHeight;
+          for (const item of series) {
+            const value = valueAt(item.key, index);
+            if (value <= 0) continue;
+            const barHeight = (value / axisMax) * plotHeight;
+            const segment = svgNode(
+              "rect",
+              { x: xAt(index) - barWidth / 2, y: base - barHeight, width: barWidth, height: barHeight, rx: 1, fill: item.color },
+              svgNode(
+                "title",
+                {},
+                labelFormat.format(new Date(point.time)) + DISPLAY_SEPARATOR + item.label + DISPLAY_SEPARATOR + tokens(value)
+              )
+            );
+            parts.push(segment);
+            base -= barHeight;
           }
         });
+        const requests = trends.requests.map((point) => Number(point.value || 0));
+        const costs = trends.total_cost.map((point) => Number(point.value || 0));
+        const hasCosts = costs.some((value) => value > 0);
+        const linePath = (values, maximum) =>
+          values.map((value, index) => (index ? "L" : "M") + xAt(index) + " " + yAt((value / maximum) * axisMax)).join(" ");
+        if (!narrow) {
+          parts.push(
+            svgNode("path", {
+              d: linePath(requests, Math.max(1, ...requests)),
+              fill: "none",
+              stroke: "#ff6048",
+              "stroke-width": 2.5,
+              "stroke-dasharray": "7 5",
+              "stroke-linejoin": "round"
+            })
+          );
+          if (hasCosts) {
+            parts.push(
+              svgNode("path", {
+                d: linePath(costs, Math.max(...costs)),
+                fill: "none",
+                stroke: colors[5],
+                "stroke-width": 2.5,
+                "stroke-linejoin": "round"
+              })
+            );
+          }
+        }
+        const average = totals.reduce((sum, value) => sum + value, 0) / totals.length;
+        parts.push(
+          svgNode("line", {
+            x1: margin.left,
+            x2: margin.left + plotWidth,
+            y1: yAt(average),
+            y2: yAt(average),
+            stroke: textColor,
+            "stroke-width": 1.5,
+            "stroke-dasharray": "5 5"
+          })
+        );
+        const maxTicks = narrow ? 4 : 8;
+        const stride = Math.max(1, Math.ceil(points.length / maxTicks));
+        points.forEach((point, index) => {
+          if (index % stride !== 0 && index !== points.length - 1) return;
+          parts.push(
+            svgLabel(xAt(index), height - 10, labelFormat.format(new Date(point.time)), {
+              fill: textColor,
+              "text-anchor": "middle",
+              "font-size": 11
+            })
+          );
+        });
+        legend.replaceChildren(
+          ...series.map((item) => chartLegendEntry(item.label, item.color)),
+          chartLegendEntry(m("ui.requests_4"), "#ff6048"),
+          ...(hasCosts ? [chartLegendEntry(m("ui.total_cost"), colors[5])] : []),
+          chartLegendEntry(m("ui.average_value", { v0: tokens(average) }), textColor)
+        );
+        container.append(
+          svgNode(
+            "svg",
+            { viewBox: "0 0 " + width + " " + height, width: "100%", height: "100%", preserveAspectRatio: "none", role: "presentation" },
+            parts
+          )
+        );
       }
 
-      function drawAnalysisTrend(canvas, points) {
-        const context = canvas.getContext("2d");
-        const width = canvas.width;
-        const height = canvas.height;
-        context.clearRect(0, 0, width, height);
+      function drawAnalysisSparkline(host, points) {
+        host.replaceChildren();
         const values = points.map((point) => Number(point.value || 0));
         if (!values.length) return;
-        if (values.length === 1) values.push(values[0]);
+        const width = 600;
+        const height = 128;
         const padding = 12;
+        if (values.length === 1) values.push(values[0]);
         const minimum = Math.min(...values);
         const maximum = Math.max(...values);
         const span = maximum - minimum;
@@ -5130,26 +4345,32 @@
           x: padding + (index * (width - padding * 2)) / (values.length - 1),
           y: span ? padding + ((maximum - value) * (height - padding * 2)) / span : maximum === 0 ? height - padding : height / 2
         }));
-        const line = new Path2D();
-        line.moveTo(coordinates[0].x, coordinates[0].y);
+        let line = "M" + coordinates[0].x + " " + coordinates[0].y;
         for (let index = 1; index < coordinates.length; index++) {
           const previous = coordinates[index - 1];
           const current = coordinates[index];
           const middle = (previous.x + current.x) / 2;
-          line.bezierCurveTo(middle, previous.y, middle, current.y, current.x, current.y);
+          line += " C" + middle + " " + previous.y + " " + middle + " " + current.y + " " + current.x + " " + current.y;
         }
-        const fill = new Path2D(line);
-        fill.lineTo(coordinates[coordinates.length - 1].x, height - padding);
-        fill.lineTo(coordinates[0].x, height - padding);
-        fill.closePath();
-        const style = getComputedStyle(canvas);
-        context.fillStyle = style.getPropertyValue("--analysis-trend-fill").trim() || "rgba(52, 120, 246, 0.16)";
-        context.fill(fill);
-        context.strokeStyle = style.getPropertyValue("--analysis-accent").trim() || "#3478f6";
-        context.lineWidth = 4;
-        context.lineCap = "round";
-        context.lineJoin = "round";
-        context.stroke(line);
+        const area =
+          line + " L" + coordinates[coordinates.length - 1].x + " " + (height - padding) + " L" + coordinates[0].x + " " +
+          (height - padding) +
+          " Z";
+        host.append(
+          svgNode(
+            "svg",
+            { viewBox: "0 0 " + width + " " + height, width: "100%", height: "100%", preserveAspectRatio: "none", role: "presentation" },
+            svgNode("path", { d: area, fill: themeColor("--analysis-trend-fill", "rgba(52, 120, 246, 0.16)") }),
+            svgNode("path", {
+              d: line,
+              fill: "none",
+              stroke: themeColor("--analysis-accent", "#3478f6"),
+              "stroke-width": 4,
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round"
+            })
+          )
+        );
       }
 
       function renderAnalysisSummary(summary, trends, daily) {
@@ -5167,10 +4388,8 @@
             el("div", { class: "analysis-summary-value mono" }, value),
             statistic,
             el("div", { class: "analysis-summary-details" }, rows),
-            el("canvas", {
+            el("div", {
               class: "analysis-summary-trend",
-              width: "600",
-              height: "128",
               role: "img",
               "aria-label": m("ui.value_trend", { v0: title }),
               "data-analysis-trend": trend
@@ -5226,14 +4445,13 @@
         );
       }
 
-      function renderAnalysisDistribution(account, { colors = analysisColors(), animate = false } = {}) {
-        const role = account ? "account" : "admin";
-        const analysis = analysisQueries[role].value;
-        const target = $(account ? "account-usage-distribution" : "usage-distribution");
+      function renderAnalysisDistribution({ colors = analysisColors() } = {}) {
+        const analysis = analysisQueries.admin.value;
+        const target = $("usage-distribution");
         const labels = { api_keys: "API Key", models: m("ui.model"), sources: m("ui.source") };
-        if (account || $("analysis-key").value) delete labels.api_keys;
-        const dimension = labels[analysisDimensions[role]] ? analysisDimensions[role] : "models";
-        const metric = analysisMetrics[role];
+        if ($("analysis-key").value) delete labels.api_keys;
+        const dimension = labels[analysisDimensions.admin] ? analysisDimensions.admin : "models";
+        const metric = analysisMetrics.admin;
         const rows = compactDistribution(analysis.usage_distribution[dimension], metric);
         for (const row of rows) {
           if (!row.key)
@@ -5245,9 +4463,9 @@
           {
             "aria-label": m("ui.usage_distribution_metric"),
             onchange: (event) => {
-              analysisMetrics[role] = event.target.value;
-              saveViewPreference(role, "analysis-metric", event.target.value);
-              renderAnalysisDistribution(account, { animate: true });
+              analysisMetrics.admin = event.target.value;
+              saveViewPreference("admin", "analysis-metric", event.target.value);
+              renderAnalysisDistribution({});
             }
           },
           Object.entries(DISTRIBUTION_METRICS).map(([key, item]) =>
@@ -5260,9 +4478,9 @@
             class: key === dimension ? "active" : "",
             text: label,
             onclick: () => {
-              analysisDimensions[role] = key;
-              saveViewPreference(role, "analysis-dimension", key);
-              if (key !== dimension) renderAnalysisDistribution(account, { animate: true });
+              analysisDimensions.admin = key;
+              saveViewPreference("admin", "analysis-dimension", key);
+              if (key !== dimension) renderAnalysisDistribution({});
             }
           })
         );
@@ -5300,16 +4518,14 @@
         target.querySelector(".usage-distribution-list").replaceChildren(...list);
         target.querySelector(".usage-distribution-layout").classList.toggle("hidden", !rows.length);
         target.querySelector(".usage-distribution-empty").classList.toggle("hidden", !!rows.length);
-        renderUsageDistributionChart(account, rows, dimension, labels[dimension], metric, colors, animate);
+        renderUsageDistributionChart(rows, dimension, labels[dimension], metric, colors);
       }
 
-      function renderAnalysis(account) {
-        const target = $(account ? "account-analysis-body" : "analysis-body");
-        const load = account ? analysisQueries.account : analysisQueries.admin;
-        const charts = analysisCharts[account ? "account" : "admin"];
+      function renderAnalysis() {
+        const target = $("analysis-body");
+        const load = analysisQueries.admin;
         let content = target.querySelector(".analysis-content");
         if (!content) {
-          const prefix = account ? "account-" : "";
           content = el(
             "div",
             { class: "analysis-content" },
@@ -5319,16 +4535,16 @@
               { class: "card usage-trend-card" },
               el("h2", {}, m("ui.usage_trend")),
               el("div", { class: "usage-trend-legend" }),
-              analysisChartPanel("usage-trend-chart", prefix + "usage-trend-chart", m("ui.usage_trend_chart"))
+              analysisChartPanel("usage-trend-chart", "usage-trend-chart", m("ui.usage_trend_chart"))
             ),
             el(
               "section",
-              { id: prefix + "usage-distribution", class: "card usage-distribution-card" },
+              { id: "usage-distribution", class: "card usage-distribution-card" },
               el("div", { class: "row spread usage-distribution-header" }),
               el(
                 "div",
                 { class: "usage-distribution-layout" },
-                analysisChartPanel("usage-distribution-chart", prefix + "usage-chart", m("ui.usage_distribution_chart")),
+                analysisChartPanel("usage-distribution-chart", "usage-chart", m("ui.usage_distribution_chart")),
                 el("div", { class: "usage-distribution-list" })
               ),
               el("div", { class: "empty usage-distribution-empty", text: m("ui.no_request_events_in_this_time_range") })
@@ -5345,12 +4561,10 @@
           return;
         }
         const theme = window.billingTheme.current();
-        const library = typeof Chart === "function" ? "ready" : chartError || "loading";
-        const rendered = charts.rendered;
-        const identities = account ? null : keyDirectory.value;
+        const rendered = analysisRendered.rendered;
+        const identities = keyDirectory.value;
         if (
-          rendered?.value === analysis && rendered.theme === theme && rendered.library === library && rendered.identities === identities &&
-          rendered.language === locale()
+          rendered?.value === analysis && rendered.theme === theme && rendered.identities === identities && rendered.language === locale()
         )
           return;
         const summary = analysis.summary;
@@ -5359,20 +4573,18 @@
         const daily = points.length > 1 && new Date(points[1].time) - new Date(points[0].time) > 12 * 3600000;
         const colors = analysisColors();
         content.querySelector(".analysis-summary-grid").replaceWith(renderAnalysisSummary(summary, trends, daily));
-        for (const canvas of target.querySelectorAll("[data-analysis-trend]")) {
-          drawAnalysisTrend(canvas, trends[canvas.dataset.analysisTrend]);
-        }
-        renderUsageTrendChart(account, trends, colors, daily);
-        renderAnalysisDistribution(account, { colors });
-        charts.rendered = { value: analysis, theme, library, identities, language: locale() };
+        for (const host of target.querySelectorAll("[data-analysis-trend]"))
+          drawAnalysisSparkline(host, trends[host.dataset.analysisTrend]);
+        renderUsageTrendChart(trends, colors, daily);
+        renderAnalysisDistribution({ colors });
+        analysisRendered.rendered = { value: analysis, theme, identities, language: locale() };
       }
 
-      function populateErrorFilters(view, account) {
-        const prefix = account ? "account-" : "";
+      function populateErrorFilters(view) {
         const filters = view.filter_options || {};
         const counts = view.error_type_counts || {};
         const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-        const typeSelect = $(prefix + "error-type");
+        const typeSelect = $("error-type");
         const types = Object.keys(counts);
         if (typeSelect.value) types.push(typeSelect.value.slice(5));
         populateEventFilterSelect(
@@ -5382,20 +4594,20 @@
           (value) => "type:" + value,
           (value) => (value || m("ui.uncategorized")) + DISPLAY_SEPARATOR + int(counts[value])
         );
-        populateEventFilterSelect($(prefix + "error-model"), m("ui.all_models"), filters.models);
-        populateSourceFilterSelect($(prefix + "error-source"), filters);
+        populateEventFilterSelect($("error-model"), m("ui.all_models"), filters.models);
+        populateSourceFilterSelect($("error-source"), filters);
       }
 
-      function renderErrors(account) {
-        const note = $(account ? "account-error-note" : "error-note");
-        const list = pagedList("errors", account);
+      function renderErrors() {
+        const note = $("error-note");
+        const list = pagedList("errors");
         if (list.renderEmpty()) {
           setText(note, "");
           return;
         }
         const view = list.data;
-        populateErrorFilters(view, account);
-        updateFilterClearButton($(account ? "account-errors-filter-clear" : "errors-filter-clear"));
+        populateErrorFilters(view);
+        updateFilterClearButton($("errors-filter-clear"));
         list.renderItems(view.entries, {
           attrs: { class: "event-list", role: "list", "aria-label": m("ui.error_event_list") },
           empty: m("ui.no_error_events"),
@@ -5412,7 +4624,7 @@
                 el(
                   "div",
                   { class: "event-request-meta" },
-                  account ? null : errorEventField("API Key", maskedText(apiKeyIdentity(entry).text), false),
+                  errorEventField("API Key", maskedText(apiKeyIdentity(entry).text), false),
                   errorEventField(m("ui.model"), entry.billing_model || entry.upstream_model),
                   entry.source ? errorEventField(m("ui.source"), maskedLabelText(entry.source)) : null
                 ),
@@ -5448,92 +4660,58 @@
         return el("span", { class: "auth-provider-icon", "data-provider": key, "aria-hidden": "true" }, iconSVG(markup));
       }
 
-      function authUI(account) {
-        const prefix = account ? "account-auth" : "auth";
+      function authUI() {
         return {
-          owner: account ? accountUIState : adminUIState,
-          files: resources[account ? "account" : "admin"].authFiles,
-          body: $(prefix + "-files-body"),
-          enabledOnly: $(prefix + "-enabled-only"),
-          provider: $(prefix + "-provider"),
-          search: $(prefix + "-search"),
-          bulk: $(prefix + "-refresh-filtered")
+          owner: adminUIState,
+          files: resources.admin.authFiles,
+          body: $("auth-files-body"),
+          enabledOnly: $("auth-enabled-only"),
+          provider: $("auth-provider"),
+          search: $("auth-search"),
+          bulk: $("auth-refresh-filtered")
         };
       }
 
-      const AUTH_QUOTA_CACHE_PREFIX = "cpa-key-billing.auth-quotas.v4.";
-
-      function resetAuthQuotaMemory(account) {
-        const role = account ? "account" : "admin";
-        const owner = account ? accountUIState : adminUIState;
-        authQuotaGeneration[role]++;
-        owner.authQuotas.clear();
-        owner.authQuotaLoading.clear();
-        owner.authQuotaErrors.clear();
-        resetAuthQuotaBatch(account);
+      function resetAuthQuotaMemory() {
+        authQuotaGeneration.admin++;
+        adminUIState.authQuotas.clear();
+        adminUIState.authQuotaLoading.clear();
+        adminUIState.authQuotaErrors.clear();
+        resetAuthQuotaBatch();
       }
 
-      function resetAuthQuotaBatch(account) {
-        const bulk = authUI(account).bulk;
+      function resetAuthQuotaBatch() {
+        const bulk = authUI().bulk;
         bulk.dataset.loading = "false";
         setLabeledActionIcon(bulk, "refresh", m("ui.update_quotas"));
       }
 
-      function authQuotaStorageKey(role) {
-        const scope = credentialScope[role];
-        return scope ? AUTH_QUOTA_CACHE_PREFIX + role + "." + scope : "";
+      // Quota results are cached in memory only. They are never written to
+      // localStorage, sessionStorage, or IndexedDB, so no Management-key-derived
+      // state survives a reload.
+      function clearCredentialScope() {
+        credentialScope.admin = "";
+        resetAuthQuotaMemory();
       }
 
-      function persistAuthQuotaCache(account) {
-        const role = account ? "account" : "admin";
-        const key = authQuotaStorageKey(role);
-        if (!key) return;
-        const owner = account ? accountUIState : adminUIState;
-        try { sessionStorage.setItem(key, JSON.stringify({ entries: [...owner.authQuotas] })); } catch (_) {}
-      }
-
-      function clearCredentialScope(account) {
-        const role = account ? "account" : "admin";
-        const key = authQuotaStorageKey(role);
-        if (key) { try { sessionStorage.removeItem(key); } catch (_) {} }
-        credentialScope[role] = "";
-        resetAuthQuotaMemory(account);
-      }
-
-      async function activateCredentialScope(account, credential) {
+      async function activateCredentialScope(credential) {
         const generation = sessionGeneration;
-        const role = account ? "account" : "admin";
-        resetAuthQuotaMemory(account);
-        credentialScope[role] = "";
-        try {
-          const scope = (await sha256Hex(role + "|" + credential)).slice(0, 32);
-          if (generation !== sessionGeneration) throw new StaleRequestError();
-          credentialScope[role] = scope;
-        } catch (_) {
-          if (generation !== sessionGeneration) throw new StaleRequestError();
-          return;
-        }
-        let cached;
-        try { cached = JSON.parse(sessionStorage.getItem(authQuotaStorageKey(role)) || "null"); } catch (_) { return; }
-        if (!Array.isArray(cached?.entries)) return;
-        const owner = account ? accountUIState : adminUIState;
-        for (const entry of cached.entries) {
-          if (Array.isArray(entry) && typeof entry[0] === "string" && Array.isArray(entry[1]?.quota)) {
-            owner.authQuotas.set(entry[0], entry[1]);
-          }
-        }
+        resetAuthQuotaMemory();
+        credentialScope.admin = "";
+        const scope = (await sha256Hex("admin|" + credential)).slice(0, 32);
+        if (generation !== sessionGeneration) throw new StaleRequestError();
+        credentialScope.admin = scope;
       }
 
-      async function fetchAuthFiles(account) {
-        const result = await (account ? accountAPI("/auth-files") : plugin("GET", "/auth-files"));
+      async function fetchAuthFiles() {
+        const result = await plugin("GET", "/auth-files");
         return requireArray(result?.files, m("ui.auth_files"));
       }
 
-      function updateAuthFiles(account, files) {
-        const role = account ? "account" : "admin";
-        const owner = account ? accountUIState : adminUIState;
+      function updateAuthFiles(files) {
+        const owner = adminUIState;
         const byIndex = new Map(files.map((file) => [file.auth_index, file]));
-        const previous = new Map((resources[role].authFiles.value || []).map((file) => [file.auth_index, file.cache_revision || ""]));
+        const previous = new Map((resources.admin.authFiles.value || []).map((file) => [file.auth_index, file.cache_revision || ""]));
         const changed = new Set(
           files.filter((file) => previous.has(file.auth_index) && previous.get(file.auth_index) !== (file.cache_revision || ""))
             .map((file) => file.auth_index)
@@ -5546,20 +4724,17 @@
         };
         const stale = [...owner.authQuotas.keys(), ...owner.authQuotaErrors.keys(), ...owner.authQuotaLoading].some(staleIndex);
         if (!stale) return;
-        authQuotaGeneration[role]++;
-        resetAuthQuotaBatch(account);
+        authQuotaGeneration.admin++;
+        resetAuthQuotaBatch();
         for (const index of owner.authQuotas.keys()) if (staleIndex(index)) owner.authQuotas.delete(index);
         for (const index of owner.authQuotaErrors.keys()) if (staleIndex(index)) owner.authQuotaErrors.delete(index);
         owner.authQuotaLoading.clear();
-        persistAuthQuotaCache(account);
       }
 
-      function authQuotaCacheCurrent(account, owner, generation, index) {
-        const role = account ? "account" : "admin";
-        const currentOwner = account ? accountUIState : adminUIState;
+      function authQuotaCacheCurrent(owner, generation, index) {
         return (
-          owner === currentOwner && generation === authQuotaGeneration[role] &&
-          (resources[role].authFiles.value || []).some((file) => file.auth_index === index)
+          owner === adminUIState && generation === authQuotaGeneration.admin &&
+          (resources.admin.authFiles.value || []).some((file) => file.auth_index === index)
         );
       }
 
@@ -5581,8 +4756,8 @@
         return plan;
       }
 
-      function filteredAuthFiles(account) {
-        const ui = authUI(account);
+      function filteredAuthFiles() {
+        const ui = authUI();
         const provider = ui.provider.value;
         const search = ui.search.value.trim().toLocaleLowerCase();
         return (ui.files.value || []).filter((file) => {
@@ -5700,8 +4875,8 @@
         );
       }
 
-      function renderAuthFileQuota(file, account) {
-        const owner = account ? accountUIState : adminUIState;
+      function renderAuthFileQuota(file) {
+        const owner = adminUIState;
         const index = file.auth_index;
         if (owner.authQuotaLoading.has(index)) {
           return el("div", { class: "auth-file-quota" }, el("div", { class: "muted small", text: m("ui.updating_quotas") }));
@@ -5716,14 +4891,14 @@
           Number.isFinite(Number(result.rate_limit_reset_credits_available_count))
         ) {
           summary.push(el("span", { text: m("ui.available_resets_value", { v0: int(result.rate_limit_reset_credits_available_count) }) }));
-          if (file.category === "codex" && (!account || resources.account.profile.value?.can_reset_auth_quota === true)) {
+          if (file.category === "codex") {
             summary.push(
               el("button", {
                 type: "button",
                 class: "link small",
                 text: m("ui.reset_quota"),
-                disabled: !canResetAuthQuota(file, account),
-                onclick: () => guard(() => resetAuthQuota(file, account))
+                disabled: !canResetAuthQuota(file),
+                onclick: () => guard(() => resetAuthQuota(file))
               })
             );
           }
@@ -5740,13 +4915,13 @@
         );
       }
 
-      function renderAuthFiles(account) {
-        const ui = authUI(account);
+      function renderAuthFiles() {
+        const ui = authUI();
         if (renderDataPending(ui.body, [ui.files])) {
           ui.bulk.disabled = true;
           return;
         }
-        const files = filteredAuthFiles(account);
+        const files = filteredAuthFiles();
         const refreshable = files.filter((file) => file.quota_supported).length;
         ui.bulk.disabled = refreshable === 0 || ui.bulk.dataset.loading === "true";
         renderCollection(ui.body, files, {
@@ -5776,7 +4951,7 @@
                   ? m("ui.update_quotas")
                   : window.billingI18n.serverMessage(file.quota_unavailable_message, file.quota_unavailable_reason) ||
                     m("ui.quota_queries_are_not_supported_for_this_auth_file_type"),
-                onclick: () => guard(() => refreshAuthQuota(file, account))
+                onclick: () => guard(() => refreshAuthQuota(file))
               },
               actionIcon("refresh")
             );
@@ -5803,7 +4978,7 @@
                 ),
                 el("div", { class: "auth-file-actions" }, el("span", { class: "tag " + statusClass, text: statusText }), refreshButton)
               ),
-              renderAuthFileQuota(file, account)
+              renderAuthFileQuota(file)
             );
           }
         });
@@ -5812,20 +4987,19 @@
       const AUTH_QUOTA_TIMEOUT_MS = 65000;
       const AUTH_QUOTA_BATCH_CONCURRENCY = 3;
 
-      function canResetAuthQuota(file, account) {
-        if (currentRole !== (account ? "account" : "admin") || (account && resources.account.profile.value?.can_reset_auth_quota !== true))
-          return false;
-        const owner = account ? accountUIState : adminUIState;
+      function canResetAuthQuota(file) {
+        if (currentRole !== "admin") return false;
+        const owner = adminUIState;
         return (
           file.category === "codex" && file.quota_supported && !file.disabled && !owner.authQuotaLoading.has(file.auth_index) &&
           Number(owner.authQuotas.get(file.auth_index)?.rate_limit_reset_credits_available_count) > 0
         );
       }
 
-      async function resetAuthQuota(file, account) {
-        if (!canResetAuthQuota(file, account)) return;
-        const owner = account ? accountUIState : adminUIState;
-        const generation = authQuotaGeneration[account ? "account" : "admin"], index = file.auth_index;
+      async function resetAuthQuota(file) {
+        if (!canResetAuthQuota(file)) return;
+        const owner = adminUIState;
+        const generation = authQuotaGeneration.admin, index = file.auth_index;
         await openActionDialog(
           m("ui.reset_codex_quota"),
           m("ui.available_resets_value_use_one_reset_now", {
@@ -5834,14 +5008,13 @@
           }),
           undefined,
           async () => {
-            if (!authQuotaCacheCurrent(account, owner, generation, index) || !canResetAuthQuota(file, account)) {
+            if (!authQuotaCacheCurrent(owner, generation, index) || !canResetAuthQuota(file)) {
               throw new UIError(m("ui.the_auth_file_or_quota_changed_close_this_dialog_update_the_quota_and_try_again"));
             }
             owner.authQuotaLoading.add(index);
             owner.authQuotas.delete(index);
             owner.authQuotaErrors.delete(index);
-            persistAuthQuotaCache(account);
-            renderAuthFiles(account);
+            renderAuthFiles();
             let resetConfirmed = false;
             try {
               const params = new URLSearchParams({
@@ -5858,21 +5031,21 @@
                 bytes,
                 (byte, index) => ([4, 6, 8, 10].includes(index) ? "-" : "") + byte.toString(16).padStart(2, "0")
               ).join("");
-              const opts = { timeoutMS: AUTH_QUOTA_TIMEOUT_MS, headers: { "X-Quota-Reset-ID": resetID }, keepSessionOnForbidden: account };
-              const result = account ? await accountAPI(path, opts) : await plugin("POST", path, null, opts);
+              const opts = { timeoutMS: AUTH_QUOTA_TIMEOUT_MS, headers: { "X-Quota-Reset-ID": resetID } };
+              const result = await plugin("POST", path, null, opts);
               if (result?.reset !== true) throw new UIError(m("ui.reset_was_not_confirmed_update_the_quota_to_check_its_current_status"));
               resetConfirmed = true;
             } finally {
-              if (authQuotaCacheCurrent(account, owner, generation, index)) {
+              if (authQuotaCacheCurrent(owner, generation, index)) {
                 owner.authQuotaLoading.delete(index);
                 if (!resetConfirmed)
                   owner.authQuotaErrors.set(index, m("ui.reset_was_not_confirmed_update_the_quota_to_check_its_current_status"));
-                renderAuthFiles(account);
+                renderAuthFiles();
               }
             }
-            if (!authQuotaCacheCurrent(account, owner, generation, index)) return;
-            await refreshAuthQuota(file, account);
-            if (authQuotaCacheCurrent(account, owner, generation, index)) {
+            if (!authQuotaCacheCurrent(owner, generation, index)) return;
+            await refreshAuthQuota(file);
+            if (authQuotaCacheCurrent(owner, generation, index)) {
               const failed = owner.authQuotaErrors.has(index);
               notify(
                 failed
@@ -5886,68 +5059,57 @@
       }
 
       // Fetching quota updates memory only. Single and batch actions own their
-      // display and persistence, so a batch never redraws the list per response.
-      async function loadAuthQuota(file, account) {
-        const owner = account ? accountUIState : adminUIState;
-        const role = account ? "account" : "admin";
-        const generation = authQuotaGeneration[role];
+      // display, so a batch never redraws the list per response.
+      async function loadAuthQuota(file) {
+        const owner = adminUIState;
+        const generation = authQuotaGeneration.admin;
         if (owner.authQuotaLoading.has(file.auth_index)) return;
         owner.authQuotaLoading.add(file.auth_index);
         owner.authQuotaErrors.delete(file.auth_index);
         try {
           const path = "/auth-files/quota?auth_index=" + encodeURIComponent(file.auth_index);
           const opts = { timeoutMS: AUTH_QUOTA_TIMEOUT_MS };
-          const result = account ? await accountAPI(path, opts) : await plugin("GET", path, null, opts);
+          const result = await plugin("GET", path, null, opts);
           requireObject(result, m("ui.upstream_quota"));
           requireArray(result.quota, m("ui.upstream_quota"));
-          if (authQuotaCacheCurrent(account, owner, generation, file.auth_index)) owner.authQuotas.set(file.auth_index, result);
+          if (authQuotaCacheCurrent(owner, generation, file.auth_index)) owner.authQuotas.set(file.auth_index, result);
         } catch (error) {
           if (error instanceof AuthError || error instanceof StaleRequestError) throw error;
-          if (authQuotaCacheCurrent(account, owner, generation, file.auth_index))
+          if (authQuotaCacheCurrent(owner, generation, file.auth_index))
             owner.authQuotaErrors.set(file.auth_index, error.message || String(error));
-        } finally {
-          if (authQuotaCacheCurrent(account, owner, generation, file.auth_index)) owner.authQuotaLoading.delete(file.auth_index);
-        }
+        } finally { if (authQuotaCacheCurrent(owner, generation, file.auth_index)) owner.authQuotaLoading.delete(file.auth_index); }
       }
 
-      async function refreshAuthQuota(file, account) {
-        const role = account ? "account" : "admin";
-        const generation = authQuotaGeneration[role];
-        const task = loadAuthQuota(file, account);
-        renderAuthFiles(account);
-        try { await task; } finally {
-          if (generation === authQuotaGeneration[role]) {
-            persistAuthQuotaCache(account);
-            renderAuthFiles(account);
-          }
-        }
+      async function refreshAuthQuota(file) {
+        const generation = authQuotaGeneration.admin;
+        const task = loadAuthQuota(file);
+        renderAuthFiles();
+        try { await task; } finally { if (generation === authQuotaGeneration.admin) renderAuthFiles(); }
       }
 
-      async function refreshFilteredAuthQuotas(account) {
-        const ui = authUI(account);
-        const role = account ? "account" : "admin";
-        const generation = authQuotaGeneration[role];
-        const files = filteredAuthFiles(account).filter((file) => file.quota_supported && !ui.owner.authQuotaLoading.has(file.auth_index));
+      async function refreshFilteredAuthQuotas() {
+        const ui = authUI();
+        const generation = authQuotaGeneration.admin;
+        const files = filteredAuthFiles().filter((file) => file.quota_supported && !ui.owner.authQuotaLoading.has(file.auth_index));
         if (!files.length || ui.bulk.dataset.loading === "true") return;
         ui.bulk.dataset.loading = "true";
         const progress = el("span", { text: m("ui.updating_0_value", { v0: files.length }) });
         ui.bulk.removeAttribute("aria-label");
         ui.bulk.replaceChildren(actionIcon("refresh"), progress);
-        renderAuthFiles(account);
+        renderAuthFiles();
         let next = 0, completed = 0;
         try {
           const worker = async () => {
-            while (next < files.length && generation === authQuotaGeneration[role]) {
-              await loadAuthQuota(files[next++], account);
+            while (next < files.length && generation === authQuotaGeneration.admin) {
+              await loadAuthQuota(files[next++]);
               setText(progress, m("ui.updating_value_value", { v0: ++completed, v1: files.length }));
             }
           };
           await settleLoads(Array.from({ length: Math.min(AUTH_QUOTA_BATCH_CONCURRENCY, files.length) }, worker));
         } finally {
-          if (generation === authQuotaGeneration[role]) {
-            persistAuthQuotaCache(account);
-            resetAuthQuotaBatch(account);
-            renderAuthFiles(account);
+          if (generation === authQuotaGeneration.admin) {
+            resetAuthQuotaBatch();
+            renderAuthFiles();
           }
         }
       }
@@ -5968,8 +5130,8 @@
         return fragment;
       }
 
-      function maskedTailText(provider, account) {
-        return [provider, el("span", { class: "text-separator", text: DISPLAY_SEPARATOR }), maskedText(account)];
+      function maskedTailText(provider, suffix) {
+        return [provider, el("span", { class: "text-separator", text: DISPLAY_SEPARATOR }), maskedText(suffix)];
       }
 
       function maskedText(value) { return el("span", { class: "mask-blur" }, displayText(value)); }
@@ -5981,17 +5143,16 @@
       }
 
       function maskedLabelText(value) {
-        const [provider, account] = splitCredentialLabel(value);
-        return provider ? maskedTailText(provider, account) : maskedText(account);
+        const [provider, suffix] = splitCredentialLabel(value);
+        return provider ? maskedTailText(provider, suffix) : maskedText(suffix);
       }
 
       function apiKeyIdentity(view) {
-        if (currentRole === "admin") view = keyDirectory.resolve(view);
+        view = keyDirectory.resolve(view);
         const scope = String(view.scope || view.key || "");
         const preview = String(view.preview || "");
         const candidate = view.label || "";
         const name = String(candidate);
-        // Account views identify the caller by label and preview alone, without a scope.
         const label = name && name !== preview && name !== scope ? candidate : "";
         const primary = label || preview || (scope ? "unknown" : m("ui.unassigned"));
         const secondary = label ? preview : "";
@@ -6018,7 +5179,7 @@
             return;
           } catch (_) {}
         }
-        // HTTP origins and embedded pages may lack clipboard access.
+        // HTTP origins may lack clipboard access.
         const previousFocus = document.activeElement;
         const input = document.createElement("textarea");
         input.value = text;
@@ -6084,8 +5245,22 @@
         }
       }
 
+      function keyStatusTag(view) {
+        const status = view.status || (view.deleted_at ? "deleted" : view.plan_id ? "managed" : "unmanaged");
+        if (status === "deleted")
+          return el("span", {
+            class: "tag plain",
+            text: m("ui.deleted"),
+            title: m("ui.removed_from_cpa_configuration_on_value", { v0: new Date(view.deleted_at).toLocaleString(locale()) })
+          });
+        if (status === "external-managed")
+          return el("span", { class: "tag warn", text: m("ui.external_managed"), title: m("ui.external_managed_status_description") });
+        if (status === "managed") return el("span", { class: "tag ok", text: m("ui.managed") });
+        return el("span", { class: "tag plain", text: m("ui.unmanaged"), title: m("ui.unmanaged_status_description") });
+      }
+
       function renderKeys() {
-        if (currentRole !== "admin" || activeTab(false) !== "keys") return false;
+        if (currentRole !== "admin" || activeTab() !== "keys") return false;
         closeHoverTooltip();
         if (renderDataPending($("keys-body"), [resources.admin.keys], m("ui.loading"), "empty section-loading")) return;
         const plans = resources.admin.plans.value;
@@ -6104,6 +5279,8 @@
           ],
           render: (view) => {
             const deleted = !!view.deleted_at;
+            const status = view.status || (deleted ? "deleted" : view.plan_id ? "managed" : "unmanaged");
+            const unmanaged = status === "unmanaged";
             const saving = adminUIState.keySubmissions.has(view.scope);
             const name = apiKeyIdentity(view).primary;
             const select = el(
@@ -6117,9 +5294,24 @@
                   guard(async () => {
                     const planID = event.target.value;
                     event.target.value = view.plan_id || "";
+                    if (!planID) {
+                      await openActionDialog(
+                        m("ui.unbind_plan_from_value", { v0: name }),
+                        m("ui.unbinding_stops_route_concurrency_price_quota_and_accounting_behavior_on_subsequent_callbacks") + " " +
+                          m(
+                            "ui.binding_changes_apply_to_subsequent_plugin_callbacks_in_flight_requests_may_finish_under_mixed_pre_change_and_post_change_state"
+                          ),
+                        undefined,
+                        () =>
+                          submitKeyChange(view.scope, async () => {
+                            await mutateAdmin("POST", "/keys/unbind", { scope: view.scope });
+                            notify(m("ui.subscription_plan_updated"));
+                          })
+                      );
+                      return;
+                    }
                     await submitKeyChange(view.scope, async () => {
-                      if (planID) await mutateAdmin("POST", "/keys/bind", { scope: view.scope, plan_id: planID });
-                      else await mutateAdmin("POST", "/keys/unbind", { scope: view.scope });
+                      await mutateAdmin("POST", "/keys/bind", { scope: view.scope, plan_id: planID });
                       notify(m("ui.subscription_plan_updated"));
                     });
                   })
@@ -6143,8 +5335,8 @@
               "select",
               {
                 "aria-label": m("ui.maximum_concurrent_requests_for_value", { v0: name }),
-                disabled: deleted || saving,
-                title: m("ui.maximum_concurrent_requests_0_means_unlimited"),
+                disabled: deleted || saving || unmanaged,
+                title: unmanaged ? m("ui.unmanaged_controls_inactive") : m("ui.maximum_concurrent_requests_0_means_unlimited"),
                 onchange: (event) =>
                   guard(async () => {
                     const value = event.target.value;
@@ -6205,24 +5397,25 @@
                 })
               ),
               el("td", {}, el("span", { class: "native-select key-plan-select" }, select)),
-              el("td", {}, renderKeyRoutes(view)),
+              el("td", {}, renderKeyRoutes(view, unmanaged)),
               el("td", {}, concurrency),
               el("td", {}, usage),
               el(
                 "td",
                 {},
-                deleted
-                  ? el("span", {
-                      class: "tag plain",
-                      text: m("ui.deleted"),
-                      title: m("ui.removed_from_cpa_configuration_on_value", { v0: new Date(view.deleted_at).toLocaleString(locale()) })
-                    })
-                  : view.blocked
-                    ? el("span", { class: "tag bad", text: m("ui.quota_exhausted") })
-                    : el("span", {
-                        class: "tag " + (view.unlimited ? "plain" : "ok"),
-                        text: view.unlimited ? m("ui.unlimited") : m("ui.active")
-                      })
+                el(
+                  "div",
+                  { class: "key-status-tags" },
+                  keyStatusTag(view),
+                  deleted || unmanaged
+                    ? null
+                    : view.blocked
+                      ? el("span", { class: "tag bad", text: m("ui.quota_exhausted") })
+                      : el("span", {
+                          class: "tag " + (view.unlimited ? "plain" : "ok"),
+                          text: view.unlimited ? m("ui.unlimited") : m("ui.active")
+                        })
+                )
               ),
               el(
                 "td",
@@ -6291,7 +5484,7 @@
 
       function sameCredentialProvider(a, b) { return a.source === b.source && a.provider === b.provider; }
 
-      function renderKeyRoutes(view) {
+      function renderKeyRoutes(view, unmanaged = false) {
         const bindings = view.route_bindings;
         const names = bindings.route_ids.map((id) => ({
           iconName: "route",
@@ -6299,7 +5492,7 @@
         }))
           .concat(routingDimensionChips(bindings, "credential", view.credential_labels))
           .concat(routingDimensionChips(bindings, "model", view.credential_labels));
-        const disabled = !!view.deleted_at || adminUIState.keySubmissions.has(view.scope);
+        const disabled = !!view.deleted_at || unmanaged || adminUIState.keySubmissions.has(view.scope);
         const tooltip = () => [
           el("div", {
             class: "hover-tooltip-heading",
@@ -6349,6 +5542,7 @@
               class: "link key-route-edit",
               text: m("ui.edit"),
               disabled,
+              title: unmanaged ? m("ui.unmanaged_controls_inactive") : null,
               "aria-label": m("ui.edit_routing_rules_for_value", { v0: apiKeyIdentity(view).primary }),
               onclick: () => guard(() => editKeyRoutes(view))
             })
@@ -7321,15 +6515,15 @@
         });
       }
 
-      function populateRequestEventFilters(filters, account) {
+      function populateRequestEventFilters(filters) {
         if (!filters) return;
-        const prefix = account ? "account-request-event" : "request-event";
+        const prefix = "request-event";
         populateEventFilterSelect($(prefix + "-model"), m("ui.all_models"), filters.models);
         populateSourceFilterSelect($(prefix + "-source"), filters);
       }
 
       function readEventKeys(reload) {
-        const range = selectedRange(false);
+        const range = selectedRange();
         return eventKeysQuery.read(
           JSON.stringify(sharedTimeRanges.admin),
           async () => {
@@ -7367,7 +6561,7 @@
         button.disabled = !Array.from(selects).some((select) => select.value);
       }
 
-      function sharedTimeID(account, suffix) { return (account ? "account-shared" : "shared") + "-time-" + suffix; }
+      function sharedTimeID(suffix) { return "shared-time-" + suffix; }
 
       function rollingTimeMode(mode) {
         const match = /^(\d+)([hd])$/.exec(mode || "");
@@ -7389,32 +6583,32 @@
         return format(range.from) + " – " + format(end);
       }
 
-      function updateSharedTimeControl(account, range = sharedTimeRanges[account ? "account" : "admin"]) {
+      function updateSharedTimeControl(range = sharedTimeRanges.admin) {
         const label = timeRangeLabel(range);
-        setText($(sharedTimeID(account, "label")), label);
-        const current = $(sharedTimeID(account, "popover")).querySelector(".time-range-current");
+        setText($(sharedTimeID("label")), label);
+        const current = $(sharedTimeID("popover")).querySelector(".time-range-current");
         if (current) setText(current, label);
       }
 
-      function closeSharedTimePopover(account, restoreFocus = false) {
-        const popover = $(sharedTimeID(account, "popover"));
+      function closeSharedTimePopover(restoreFocus = false) {
+        const popover = $(sharedTimeID("popover"));
         if (popover.classList.contains("hidden")) return;
         popover.classList.add("hidden");
-        $(sharedTimeID(account, "backdrop")).classList.add("hidden");
-        $(sharedTimeID(account, "trigger")).setAttribute("aria-expanded", "false");
-        sharedTimeDrafts[account ? "account" : "admin"] = null;
-        updateSharedTimeControl(account);
-        if (restoreFocus) $(sharedTimeID(account, "trigger")).focus();
+        $(sharedTimeID("backdrop")).classList.add("hidden");
+        $(sharedTimeID("trigger")).setAttribute("aria-expanded", "false");
+        sharedTimeDrafts.admin = null;
+        updateSharedTimeControl();
+        if (restoreFocus) $(sharedTimeID("trigger")).focus();
       }
 
-      function positionSharedTimePopover(account) {
-        const popover = $(sharedTimeID(account, "popover"));
+      function positionSharedTimePopover() {
+        const popover = $(sharedTimeID("popover"));
         if (popover.classList.contains("hidden")) return;
         if (!matchMedia("(max-width: 768px)").matches) {
           popover.style.cssText = "";
           return;
         }
-        positionAnchoredPopover(popover, $(sharedTimeID(account, "trigger")), true);
+        positionAnchoredPopover(popover, $(sharedTimeID("trigger")), true);
       }
 
       function localDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime(); }
@@ -7488,11 +6682,11 @@
           : { unit, start: shiftLocalDay(draft.today, -6), end: draft.today };
       }
 
-      function renderCustomTimeRange(account, draft) {
+      function renderCustomTimeRange(draft) {
         const custom = draft.custom;
         const content = el("div", { class: "time-range-custom" });
         const redraw = () => {
-          const popover = $(sharedTimeID(account, "popover"));
+          const popover = $(sharedTimeID("popover"));
           const focused = document.activeElement;
           const label = focused.getAttribute("aria-label") || focused.textContent;
           const matchingButtons = () =>
@@ -7500,7 +6694,7 @@
               (button) => (button.getAttribute("aria-label") || button.textContent) === label
             );
           const index = matchingButtons().indexOf(focused);
-          renderSharedTimePopover(account);
+          renderSharedTimePopover();
           const next = matchingButtons()[index];
           (next || popover.querySelector(".time-range-modes .active")).focus({ preventScroll: true });
         };
@@ -7519,7 +6713,7 @@
         const apply = () => {
           const to = Math.min(Date.now(), custom.unit === "day" ? shiftLocalDay(custom.end, 1) : custom.end + 3600000);
           guard(() =>
-            applyTimeRange(account, {
+            applyTimeRange({
               mode: "custom",
               unit: custom.unit,
               from: new Date(custom.start).toISOString(),
@@ -7684,7 +6878,7 @@
               el("button", {
                 type: "button",
                 text: m("ui.cancel"),
-                onclick: draft.view === "summary" ? () => closeSharedTimePopover(account, true) : pickerCancel
+                onclick: draft.view === "summary" ? () => closeSharedTimePopover(true) : pickerCancel
               }),
               el("button", { type: "button", class: "primary", text: m("ui.apply"), onclick: apply })
             )
@@ -7693,10 +6887,10 @@
         return content;
       }
 
-      function renderSharedTimePopover(account) {
-        const role = account ? "account" : "admin";
+      function renderSharedTimePopover() {
+        const role = "admin";
         const draft = sharedTimeDrafts[role];
-        const popover = $(sharedTimeID(account, "popover"));
+        const popover = $(sharedTimeID("popover"));
         popover.replaceChildren(
           el(
             "div",
@@ -7714,15 +6908,14 @@
                 "aria-pressed": String(mode === draft.mode),
                 class: mode === draft.mode ? "active" : "",
                 onclick: () => {
-                  if (mode === "custom") resetCustomTimeDraft(account, draft);
+                  if (mode === "custom") resetCustomTimeDraft(draft);
                   draft.mode = mode;
                   draft.view = "summary";
-                  renderSharedTimePopover(account);
+                  renderSharedTimePopover();
                   popover.querySelector(".time-range-modes .active").focus();
                   if (mode !== "custom")
                     guard(() =>
                       applyTimeRange(
-                        account,
                         { mode: mode === "hour" || mode === "day" ? draft[mode] + (mode === "hour" ? "h" : "d") : mode },
                         false
                       )
@@ -7733,7 +6926,7 @@
           )
         );
         if (draft.mode === "custom") {
-          popover.append(renderCustomTimeRange(account, draft));
+          popover.append(renderCustomTimeRange(draft));
           for (const list of popover.querySelectorAll(".time-range-hour-list")) {
             const selected = list.querySelector(".active");
             if (selected) list.scrollTop = Math.max(0, selected.offsetTop - (list.clientHeight - selected.clientHeight) / 2);
@@ -7747,7 +6940,7 @@
           const commit = () => {
             activePointer = null;
             if (sharedTimeDrafts[role] === draft && draft.mode === unit)
-              guard(() => applyTimeRange(account, { mode: draft[unit] + (unit === "hour" ? "h" : "d") }, false));
+              guard(() => applyTimeRange({ mode: draft[unit] + (unit === "hour" ? "h" : "d") }, false));
           };
           const finishPointer = (event) => { if (activePointer === event.pointerId) commit(); };
           const slider = el("input", {
@@ -7762,7 +6955,7 @@
             oninput: (event) => {
               draft[unit] = Number(event.target.value);
               setText(value, duration());
-              updateSharedTimeControl(account, { mode: draft[unit] + (unit === "hour" ? "h" : "d") });
+              updateSharedTimeControl({ mode: draft[unit] + (unit === "hour" ? "h" : "d") });
               event.currentTarget.style.setProperty("--range-progress", ((draft[unit] - min) / (max - min)) * 100 + "%");
             },
             onpointerdown: (event) => {
@@ -7803,11 +6996,11 @@
             )
           );
         }
-        positionSharedTimePopover(account);
+        positionSharedTimePopover();
       }
 
-      function resetCustomTimeDraft(account, draft) {
-        const range = sharedTimeChoices[account ? "account" : "admin"].custom;
+      function resetCustomTimeDraft(draft) {
+        const range = sharedTimeChoices.admin.custom;
         const now = new Date();
         const hour = new Date(now);
         hour.setMinutes(0, 0, 0);
@@ -7830,42 +7023,42 @@
         } else { draft.custom = { unit: "day", start: draft.today, end: draft.today }; }
       }
 
-      function openSharedTimePopover(account) {
-        const popover = $(sharedTimeID(account, "popover"));
-        if (!popover.classList.contains("hidden")) return closeSharedTimePopover(account, true);
-        closeSharedTimePopover(!account);
-        const role = account ? "account" : "admin";
+      function openSharedTimePopover() {
+        const popover = $(sharedTimeID("popover"));
+        if (!popover.classList.contains("hidden")) return closeSharedTimePopover(true);
+        closeSharedTimePopover(true);
+        const role = "admin";
         const range = sharedTimeRanges[role];
         const rolling = rollingTimeMode(range.mode);
         const draft = { ...sharedTimeChoices[role], mode: rolling?.unit || range.mode, view: "summary", endpoint: "start" };
         if (rolling) draft[rolling.unit] = rolling.value;
-        resetCustomTimeDraft(account, draft);
+        resetCustomTimeDraft(draft);
         sharedTimeDrafts[role] = draft;
-        renderSharedTimePopover(account);
+        renderSharedTimePopover();
         popover.classList.remove("hidden");
-        $(sharedTimeID(account, "backdrop")).classList.remove("hidden");
-        $(sharedTimeID(account, "trigger")).setAttribute("aria-expanded", "true");
-        positionSharedTimePopover(account);
+        $(sharedTimeID("backdrop")).classList.remove("hidden");
+        $(sharedTimeID("trigger")).setAttribute("aria-expanded", "true");
+        positionSharedTimePopover();
         popover.querySelector(".time-range-modes .active").focus();
       }
 
-      function applyTimeRange(account, range, close = true) {
-        const role = account ? "account" : "admin";
+      function applyTimeRange(range, close = true) {
+        const role = "admin";
         const previous = sharedTimeRanges[role];
         sharedTimeRanges[role] = range;
         const rolling = rollingTimeMode(range.mode);
         if (rolling) sharedTimeChoices[role][rolling.unit] = rolling.value;
         if (range.mode === "custom") sharedTimeChoices[role].custom = range;
         saveViewPreference(role, "time-range", range);
-        updateSharedTimeControl(account);
-        if (close) closeSharedTimePopover(account, true);
-        if (JSON.stringify(previous) !== JSON.stringify(range)) { return loadPage(account); }
+        updateSharedTimeControl();
+        if (close) closeSharedTimePopover(true);
+        if (JSON.stringify(previous) !== JSON.stringify(range)) { return loadPage(); }
       }
 
-      function bindSharedTimeControls(account) {
-        $(sharedTimeID(account, "trigger")).onclick = () => openSharedTimePopover(account);
-        $(sharedTimeID(account, "backdrop")).onclick = () => closeSharedTimePopover(account, true);
-        $(sharedTimeID(account, "popover")).onkeydown = (event) => {
+      function bindSharedTimeControls() {
+        $(sharedTimeID("trigger")).onclick = () => openSharedTimePopover();
+        $(sharedTimeID("backdrop")).onclick = () => closeSharedTimePopover(true);
+        $(sharedTimeID("popover")).onkeydown = (event) => {
           if (event.key !== "Tab") return;
           const controls = Array.from(event.currentTarget.querySelectorAll("button:not(:disabled), input:not(:disabled)"));
           const target = event.shiftKey ? controls.at(-1) : controls[0];
@@ -7884,11 +7077,11 @@
         return '"' + String(value).replaceAll('"', '""') + '"';
       }
 
-      function eventCSV(entries, kind, account) {
-        const columns = EVENT_CSV_COLUMNS[kind].filter((column) => !account || !["preview", "label"].includes(column));
+      function eventCSV(entries, kind) {
+        const columns = EVENT_CSV_COLUMNS[kind];
         const lines = [columns.map(csvCell).join(",")];
         for (const record of entries) {
-          const entry = account ? record : keyDirectory.resolve(record);
+          const entry = keyDirectory.resolve(record);
           const measured = entry.accounting_quality === "complete";
           const row =
             kind === "events"
@@ -7916,26 +7109,26 @@
         setTimeout(() => URL.revokeObjectURL(url), 0);
       }
 
-      async function exportEvents(kind, account) {
-        const button = $(account ? "account-events-export" : "events-export");
+      async function exportEvents(kind) {
+        const button = $("events-export");
         if (button.disabled) return;
         button.disabled = true;
         setLabeledActionIcon(button, "download", m("ui.exporting"));
         const view = PAGED_LIST_VIEWS[kind];
         try {
-          const selection = pagedListSelection(kind, account);
+          const selection = pagedListSelection(kind);
           const params = { ...selection.params, limit: EVENT_EXPORT_BATCH_SIZE };
           const generation = sessionGeneration;
           let result = null;
           do {
-            const response = await fetchListPage(kind, account, params, result);
+            const response = await fetchListPage(kind, params, result);
             if (generation !== sessionGeneration) throw new StaleRequestError();
-            result = mergeListPage(kind, account, response);
+            result = mergeListPage(kind, response);
           } while (result.cursor);
           const entries = result.page.entries;
           const stamp = new Date().toISOString().replaceAll(":", "-").slice(0, 19);
-          const name = "cpa-key-billing-" + (account ? "account-" : "") + view.tab + "-";
-          downloadCSV(name + stamp + ".csv", eventCSV(entries, kind, account));
+          const name = "cpa-key-billing-" + view.tab + "-";
+          downloadCSV(name + stamp + ".csv", eventCSV(entries, kind));
           notify(m("ui.exported_value_value_records", { v0: int(entries.length), v1: view.label }));
         } finally {
           button.disabled = false;
@@ -7958,19 +7151,19 @@
         });
       }
 
-      function renderRequestEvents(account = false) {
+      function renderRequestEvents() {
         hideCostTooltip();
-        const list = pagedList("events", account);
-        const note = $(account ? "account-request-event-note" : "request-event-note");
+        const list = pagedList("events");
+        const note = $("request-event-note");
         if (list.renderEmpty()) {
           setText(note, "");
           return;
         }
         const view = list.data;
-        const prefix = account ? "account-request-event" : "request-event";
-        populateRequestEventFilters(view.filter_options, account);
+        const prefix = "request-event";
+        populateRequestEventFilters(view.filter_options);
         labelRequestEventStatuses($(prefix + "-status"), view.status_counts);
-        updateFilterClearButton($(account ? "account-request-events-filter-clear" : "request-events-filter-clear"));
+        updateFilterClearButton($("request-events-filter-clear"));
         const entries = view.entries;
         const hasCacheWrite = entries.some((entry) => entry.cost.cache_write_tokens !== 0);
         setText(note, loadedCountText(entries.length, view.total, list.complete));
@@ -8019,7 +7212,7 @@
             "tr",
             {},
             el("td", {}, dateTimeLines(entry.at)),
-            account ? null : el("td", {}, renderAPIKeyIdentity(entry, { stacked: true })),
+            el("td", {}, renderAPIKeyIdentity(entry, { stacked: true })),
             el("td", { class: "small" }, el("div", { class: "request-event-cell-line mono" }, billingModel), modelNote),
             el(
               "td",
@@ -8098,7 +7291,7 @@
           render: renderRow,
           headers: [
             m("ui.time"),
-            ...(account ? [] : ["API Key"]),
+            "API Key",
             m("ui.model"),
             m("ui.executor_source"),
             m("ui.reasoning_speed"),
@@ -8201,8 +7394,8 @@
       function upstreamCredentialText(value) {
         const label = (name) => m("ui.upstream_credential_value", { v0: name });
         if (!value) return label(m("ui.unknown_2"));
-        const [provider, account] = splitCredentialLabel(value);
-        return provider ? maskedTailText(label(provider), account) : [label(""), maskedText(account)];
+        const [provider, suffix] = splitCredentialLabel(value);
+        return provider ? maskedTailText(label(provider), suffix) : [label(""), maskedText(suffix)];
       }
 
       function renderPluginLogMessage(pluginLog) {
@@ -8274,7 +7467,7 @@
         );
       }
 
-      function renderQuotaWindows(view, account = false) {
+      function renderQuotaWindows(view) {
         if (view.unlimited) return el("span", { class: "muted", text: m("ui.unlimited") });
         return el(
           "div",
@@ -8284,7 +7477,7 @@
             const single = dimensions.length === 1;
             const reset = el("span", {
               class: "muted",
-              text: quotaWindowResetLabel(window, account),
+              text: quotaWindowResetLabel(window, false),
               title: window.started ? m("ui.resets_at_value", { v0: when(window.end_at) }) : null
             });
             return el(
@@ -8294,7 +7487,7 @@
               dimensions.map((balance) => {
                 const metric = QUOTA_DIMENSIONS.find((item) => item.metric === balance.metric);
                 const quota = remainingQuota(balance.used_percent);
-                const label = displayLabel(single ? window.name + (account ? DISPLAY_SEPARATOR + metric.label : "") : metric.label);
+                const label = displayLabel(single ? window.name : metric.label);
                 return el(
                   "div",
                   { class: "quota-metric" },
@@ -8990,28 +8183,21 @@
       }
 
       async function submitLogin() {
-        const role = loginMode;
         const generation = sessionGeneration;
-        let key = $("gate-key").value.trim();
-        if (!key) key = await recalledCredential(role);
+        const key = $("gate-key").value.trim();
         if (!key) {
-          setText($("gate-error"), role === "account" ? m("ui.enter_an_api_key") : m("ui.enter_a_management_key"));
+          setText($("gate-error"), m("ui.enter_a_management_key"));
           $("gate-error").className = "notice err show";
           return;
         }
         $("gate-submit").disabled = true;
         try {
-          if (role === "account") await startAccount(key); else await startAdmin(key);
+          await startAdmin(key);
           if (generation !== sessionGeneration) return;
-          try { await saveCredential(role, key, $("gate-remember").checked); } catch (err) {
-            if (generation !== sessionGeneration) return;
-            const message = m("ui.signed_in_but_the_session_was_not_saved_value", { v0: err.message || err });
-            notify(message, "err");
-          }
           $("gate-key").value = "";
         } catch (err) {
           if (generation !== sessionGeneration || err instanceof StaleRequestError) return;
-          if (err instanceof AuthError) await fail(err); else showGate(role, m("ui.sign_in_failed_value", { v0: err.message || err }));
+          if (err instanceof AuthError) await fail(err); else showGate(m("ui.sign_in_failed_value", { v0: err.message || err }));
         } finally { $("gate-submit").disabled = false; }
       }
 
@@ -9019,8 +8205,6 @@
         event.preventDefault();
         submitLogin();
       };
-      $("gate-mode-admin").onclick = () => setLoginMode("admin");
-      $("gate-mode-account").onclick = () => setLoginMode("account");
 
       // @license Lucide Icons - ISC; SVG assets are embedded locally.
       const LUCIDE_ICONS = {
@@ -9081,7 +8265,7 @@
 
       function updateThemedVisuals() {
         updateThemeButtons();
-        if (currentRole && activeTab(currentRole === "account") === "analysis") renderAnalysis(currentRole === "account");
+        if (currentRole && activeTab() === "analysis") renderAnalysis();
       }
 
       for (const button of document.querySelectorAll('[data-page-action="refresh"]')) {
@@ -9098,11 +8282,9 @@
         setActionIcon(button, "logout", m("ui.sign_out"));
         button.onclick = () =>
           guard(async () => {
-            const role = currentRole || loginMode;
-            await deleteCredential(role);
-            const preference = viewPreferenceKey(role, (role === "account" ? "account-" : "") + "privacy-mask");
+            const preference = viewPreferenceKey("admin", "privacy-mask");
             if (preference) { try { localStorage.removeItem(preference); } catch (_) {} }
-            showGate(role, "");
+            showGate("");
           });
       });
       function addLanguageControl(group) {
@@ -9167,17 +8349,14 @@
         dateFormatter = new Intl.DateTimeFormat(locale());
         timeFormatter = new Intl.DateTimeFormat(locale(), { hour: "numeric", minute: "numeric", second: "numeric", hour12: false });
         updateThemeButtons();
-        updateSharedTimeControl(false);
-        updateSharedTimeControl(true);
+        updateSharedTimeControl();
         renderPage();
         schedulePageTabLayout();
       });
 
       function updateRefreshButtons() {
         const page = currentPage();
-        const label = currentRole
-          ? document.querySelector(currentRole === "account" ? "[data-account-tab].active" : "[data-tab].active")?.textContent.trim()
-          : "";
+        const label = currentRole ? document.querySelector("[data-tab].active")?.textContent.trim() : "";
         for (const button of document.querySelectorAll('[data-page-action="refresh"]')) {
           button.disabled = !!page?.task;
           setTextAttribute(
@@ -9190,20 +8369,13 @@
 
       function refreshPage() {
         if (!currentRole) return Promise.resolve();
-        return currentPage().task || guard(() => loadPage(currentRole === "account", { reload: true }));
+        return currentPage().task || guard(() => loadPage({ reload: true }));
       }
 
-      document.querySelectorAll("[data-account-tab]").forEach((button) => {
-        button.onclick = () => {
-          if (activeTab(true) === button.dataset.accountTab) return;
-          setAccountTab(button.dataset.accountTab);
-          guard(() => loadPage(true));
-        };
-      });
       $("analysis-key").addEventListener("change", () =>
         guard(() => {
           saveChoice("admin", "analysis-key");
-          return loadPage(false);
+          return loadPage();
         })
       );
 
@@ -9226,28 +8398,27 @@
           reload();
         };
       }
-      for (const account of [false, true]) {
-        const ui = authUI(account);
-        const role = account ? "account" : "admin";
+      {
+        const ui = authUI();
         setLabeledActionIcon(ui.bulk, "refresh", m("ui.update_quotas"));
         ui.enabledOnly.addEventListener("change", () => {
-          saveChoice(role, ui.enabledOnly.id);
-          renderAuthFiles(account);
+          saveChoice("admin", ui.enabledOnly.id);
+          renderAuthFiles();
         });
         ui.provider.addEventListener("change", () => {
-          saveChoice(role, ui.provider.id);
-          renderAuthFiles(account);
+          saveChoice("admin", ui.provider.id);
+          renderAuthFiles();
         });
-        ui.search.addEventListener("input", () => renderAuthFiles(account));
-        ui.bulk.onclick = () => guard(() => refreshFilteredAuthQuotas(account));
+        ui.search.addEventListener("input", () => renderAuthFiles());
+        ui.bulk.onclick = () => guard(() => refreshFilteredAuthQuotas());
       }
 
-      for (const role of ["admin", "account"]) {
-        const button = privacyMaskButton(role);
-        setPrivacyMask(role, false);
+      {
+        const button = privacyMaskButton();
+        setPrivacyMask(false);
         button.onclick = () => {
-          setPrivacyMask(role, !privacyMasked());
-          saveViewPreference(role, button.id, privacyMasked());
+          setPrivacyMask(!privacyMasked());
+          saveViewPreference("admin", button.id, privacyMasked());
         };
       }
 
@@ -9274,9 +8445,9 @@
       }
       for (const tab of TABS)
         tab.onclick = () => {
-          if (activeTab(false) === tab.dataset.tab) return;
+          if (activeTab() === tab.dataset.tab) return;
           setAdminTab(tab.dataset.tab);
-          guard(() => loadPage(false));
+          guard(() => loadPage());
         };
 
       $("key-filter").addEventListener("input", renderKeys);
@@ -9422,49 +8593,35 @@
             notify(m("ui.cleared_value_plugin_log_entries", { v0: result.cleared }));
           }
         );
-      for (const account of [false, true]) {
-        const role = account ? "account" : "admin";
-        const prefix = account ? "account-" : "";
+      {
         bindPagedListFilters(
-          pagedList("events", account),
-          role,
-          ["request-event-model", "request-event-source", "request-event-status"].map((id) => prefix + id),
-          $(prefix + "request-events-filter-clear")
+          pagedList("events"),
+          "admin",
+          ["request-event-model", "request-event-source", "request-event-status"],
+          $("request-events-filter-clear")
         );
-        bindPagedListFilters(
-          pagedList("errors", account),
-          role,
-          ["error-model", "error-source", "error-type"].map((id) => prefix + id),
-          $(prefix + "errors-filter-clear")
-        );
-        const exportButton = $(account ? "account-events-export" : "events-export");
+        bindPagedListFilters(pagedList("errors"), "admin", ["error-model", "error-source", "error-type"], $("errors-filter-clear"));
+        const exportButton = $("events-export");
         setLabeledActionIcon(exportButton, "download", m("ui.export"));
-        exportButton.onclick = () => guard(() => exportEvents(activeTab(account) === "errors" ? "errors" : "events", account));
-        bindSharedTimeControls(account);
-        updateSharedTimeControl(account);
+        exportButton.onclick = () => guard(() => exportEvents(activeTab() === "errors" ? "errors" : "events"));
+        bindSharedTimeControls();
+        updateSharedTimeControl();
       }
       addEventListener(
         "pointerdown",
         (event) => {
-          for (const account of [false, true]) {
-            const popover = $(sharedTimeID(account, "popover"));
-            if (
-              !popover.classList.contains("hidden") && !popover.contains(event.target) &&
-              !$(sharedTimeID(account, "trigger")).contains(event.target)
-            ) { closeSharedTimePopover(account); }
-          }
+          const popover = $(sharedTimeID("popover"));
+          if (
+            !popover.classList.contains("hidden") && !popover.contains(event.target) && !$(sharedTimeID("trigger")).contains(event.target)
+          ) { closeSharedTimePopover(); }
         },
         true
       );
       addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        closeSharedTimePopover(false, true);
-        closeSharedTimePopover(true, true);
-      });
-      matchMedia("(max-width: 768px)").addEventListener("change", () => {
-        closeSharedTimePopover(false);
         closeSharedTimePopover(true);
       });
+      matchMedia("(max-width: 768px)").addEventListener("change", () => { closeSharedTimePopover(); });
       $("keys-import-labels").onclick = () =>
         openActionDialog(
           m("ui.import_cpamp_labels"),
@@ -9545,7 +8702,6 @@
         });
 
       (async function () {
-        const panelKey = readPanelKey();
         document.querySelectorAll('input[type="checkbox"]').forEach((input) => {
           const placeholder = document.createTextNode("");
           input.replaceWith(placeholder);
@@ -9554,20 +8710,7 @@
         document.querySelectorAll("[data-lucide-icon]")
           .forEach((placeholder) => placeholder.replaceWith(actionIcon(placeholder.dataset.lucideIcon, placeholder.className)));
         updateThemeButtons();
-        try {
-          if (embedded && panelKey && initialRoute.role !== "account") {
-            await startAdmin(panelKey);
-            return;
-          }
-          const saved = await recalledCredential(loginMode, true);
-          if (!saved) {
-            showGate(loginMode, "");
-            return;
-          }
-          if (loginMode === "account") await startAccount(saved); else await startAdmin(saved);
-        } catch (err) {
-          if (err instanceof AuthError) await fail(err); else showGate(loginMode, m("ui.sign_in_failed_value", { v0: err.message || err }));
-        }
+        showGate("");
       })();
     </script>
   </body>
