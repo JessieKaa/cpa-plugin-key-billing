@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"bytes"
+	"errors"
 	"math"
 	"net/http"
 	"os"
@@ -281,15 +282,23 @@ func TestUsageHandlePersistsBillWithoutPlaintextKeys(t *testing.T) {
 		t.Fatalf("persisted event identity = %+v", entry)
 	}
 
-	raw, errRead := os.ReadFile(statePath)
-	if errRead != nil {
-		t.Fatalf("read persisted state: %v", errRead)
-	}
-	if bytes.Contains(raw, []byte(testAPIKey)) {
-		t.Fatal("database contains the plaintext downstream API key")
-	}
-	if bytes.Contains(raw, []byte("sk-upstream-key-0001")) {
-		t.Fatal("database contains the plaintext upstream API key")
+	// The state database and its WAL/SHM sidecars must not contain either
+	// plaintext key. Plugin logs live in the same database, so this scan covers
+	// them too.
+	for _, path := range []string{statePath, statePath + "-wal", statePath + "-shm"} {
+		raw, errRead := os.ReadFile(path)
+		if errors.Is(errRead, os.ErrNotExist) {
+			continue // A checkpointed database can leave no sidecar behind.
+		}
+		if errRead != nil {
+			t.Fatalf("read %s: %v", path, errRead)
+		}
+		if bytes.Contains(raw, []byte(testAPIKey)) {
+			t.Fatalf("%s contains the plaintext downstream API key", path)
+		}
+		if bytes.Contains(raw, []byte("sk-upstream-key-0001")) {
+			t.Fatalf("%s contains the plaintext upstream API key", path)
+		}
 	}
 }
 
