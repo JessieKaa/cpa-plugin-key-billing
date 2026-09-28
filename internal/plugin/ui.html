@@ -2463,7 +2463,6 @@
       function emptyAuthQuotaState() { return { authQuotas: new Map(), authQuotaLoading: new Set(), authQuotaErrors: new Map() }; }
       let adminUIState = { ...emptyAuthQuotaState(), keySubmissions: new Set() };
       const authQuotaGeneration = { admin: 0 };
-      const credentialScope = { admin: "" };
 
       const CONCURRENCY_OPTIONS = [0, 1, 2, 3, 5, 10, 20, 50];
       const CUSTOM_CONCURRENCY = "__custom__";
@@ -2897,10 +2896,10 @@
 
       const sharedTimeRanges = { admin: { mode: "30d" } };
 
-      function viewPreferenceKey(role, name) {
-        const scope = credentialScope[role];
-        return scope ? VIEW_PREFERENCE_PREFIX + role + "." + scope + "." + name : "";
-      }
+      // Preference keys are stable and role-scoped. They never embed a
+      // credential or a credential-derived value, so nothing about the
+      // Management key can be recovered from persistent browser storage.
+      function viewPreferenceKey(role, name) { return VIEW_PREFERENCE_PREFIX + role + "." + name; }
 
       function viewPreference(role, name, fallback) {
         const key = viewPreferenceKey(role, name);
@@ -3345,7 +3344,7 @@
         for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
         for (const controller of activeRequests) controller.abort();
         if (currentRole) {
-          clearCredentialScope();
+          resetAuthQuotaMemory();
           resetRoleData();
         }
         authKey = "";
@@ -3606,7 +3605,7 @@
         ]);
         await settleLoads([
           read("plans", () => fetchAdminCollection("plans")),
-          read("models", async () => fetchModels(false, (await configuredKeys).find((key) => key.trim())?.trim() || "")),
+          read("models", async () => fetchModels((await configuredKeys).find((key) => key.trim())?.trim() || "")),
           synced.then(() => settleLoads(["keys", "routes", "credentials"].map((name) => read(name, () => fetchAdminCollection(name)))))
         ]);
         return errors;
@@ -4037,7 +4036,7 @@
         const generation = sessionGeneration;
         currentRole = "admin";
         authKey = key;
-        await activateCredentialScope(key);
+        resetAuthQuotaMemory();
         if (generation !== sessionGeneration) throw new StaleRequestError();
         restoreRolePreferences();
         const route = pageRoute();
@@ -4684,23 +4683,6 @@
         const bulk = authUI().bulk;
         bulk.dataset.loading = "false";
         setLabeledActionIcon(bulk, "refresh", m("ui.update_quotas"));
-      }
-
-      // Quota results are cached in memory only. They are never written to
-      // localStorage, sessionStorage, or IndexedDB, so no Management-key-derived
-      // state survives a reload.
-      function clearCredentialScope() {
-        credentialScope.admin = "";
-        resetAuthQuotaMemory();
-      }
-
-      async function activateCredentialScope(credential) {
-        const generation = sessionGeneration;
-        resetAuthQuotaMemory();
-        credentialScope.admin = "";
-        const scope = (await sha256Hex("admin|" + credential)).slice(0, 32);
-        if (generation !== sessionGeneration) throw new StaleRequestError();
-        credentialScope.admin = scope;
       }
 
       async function fetchAuthFiles() {
@@ -5391,7 +5373,7 @@
                       actionIcon("copy")
                     ),
                     !deleted && !view.in_config
-                      ? el("span", {}, displayText(m("ui.valueusage_tracking_only", { v0: DISPLAY_SEPARATOR })))
+                      ? el("span", {}, displayText(m("ui.value_not_in_the_cpa_api_key_list", { v0: DISPLAY_SEPARATOR })))
                       : null
                   ]
                 })

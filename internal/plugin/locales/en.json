@@ -264,7 +264,7 @@
   "ui.enter_an_integer_from_0_to_10000_use_0_for_unlimited": "Enter an integer from 0 to 10000. Use 0 for unlimited.",
   "ui.enter_manually": "Enter manually…",
   "ui.current_value": "Current: {v0}",
-  "ui.valueusage_tracking_only": "{v0}Usage tracking only",
+  "ui.value_not_in_the_cpa_api_key_list": "{v0}Not in CPA's configured API key list",
   "ui.deleted": "Deleted",
   "ui.removed_from_cpa_configuration_on_value": "Removed from CPA configuration on {v0}",
   "ui.reset": "Reset",

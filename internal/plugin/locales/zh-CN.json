@@ -264,7 +264,7 @@
   "ui.enter_an_integer_from_0_to_10000_use_0_for_unlimited": "请输入 0 到 10000 的整数，0 表示不限制。",
   "ui.enter_manually": "手动输入…",
   "ui.current_value": "当前 {v0}",
-  "ui.valueusage_tracking_only": "{v0}仅用量记录",
+  "ui.value_not_in_the_cpa_api_key_list": "{v0}不在 CPA 配置的 API Key 列表中",
   "ui.deleted": "已删除",
   "ui.removed_from_cpa_configuration_on_value": "从 CPA 配置中删除于 {v0}",
   "ui.reset": "重置",
