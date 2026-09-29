@@ -17,21 +17,28 @@ set -euo pipefail
 #   --management-key <k> Management key in plaintext. Prefer CPA_MANAGEMENT_KEY
 #                        or the interactive prompt: the config stores only a
 #                        bcrypt hash, so the plaintext cannot be recovered from it.
+#   --check-negative-auth
+#                        Also verify that missing and wrong keys are rejected.
+#                        Off by default: each rejected attempt counts toward
+#                        CLIProxyAPI's 5-failure limit, after which the client IP
+#                        is banned from Management for 30 minutes.
 #
 # Exit status is 1 when any check fails.
 
 base_url="http://127.0.0.1:8317"
 management_key="${CPA_MANAGEMENT_KEY:-}"
+check_negative_auth=0
 failures=0
 
 usage() {
-  echo "用法：$0 [--base-url <url>] [--management-key <key>]" >&2
+  echo "用法：$0 [--base-url <url>] [--management-key <key>] [--check-negative-auth]" >&2
 }
 
 while (( $# > 0 )); do
   case "$1" in
     --base-url) base_url="$2"; shift 2 ;;
     --management-key) management_key="$2"; shift 2 ;;
+    --check-negative-auth) check_negative_auth=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "未知参数：$1" >&2; usage; exit 2 ;;
   esac
@@ -146,17 +153,22 @@ for path in ui profile subscription routing prices analysis events errors auth-f
   fi
 done
 
-printf '==> 管理认证\n'
-no_key="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "$base_url/v0/management/plugins/cpa-key-billing/keys")"
-wrong_key="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -H "Authorization: Bearer wrong-management-key" "$base_url/v0/management/plugins/cpa-key-billing/keys")"
-for pair in "无密钥:$no_key" "错误密钥:$wrong_key"; do
-  label="${pair%%:*}"; status="${pair#*:}"
-  if [[ "$status" == "401" || "$status" == "403" ]]; then
-    ok "$label HTTP $status"
-  else
-    fail "$label HTTP $status，预期 401/403"
-  fi
-done
+if (( check_negative_auth )); then
+  printf '==> 管理认证（负向用例）\n'
+  no_key="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' "$base_url/v0/management/plugins/cpa-key-billing/keys")"
+  wrong_key="$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -H "Authorization: Bearer wrong-management-key" "$base_url/v0/management/plugins/cpa-key-billing/keys")"
+  for pair in "无密钥:$no_key" "错误密钥:$wrong_key"; do
+    label="${pair%%:*}"; status="${pair#*:}"
+    if [[ "$status" == "401" || "$status" == "403" ]]; then
+      ok "$label HTTP $status"
+    else
+      fail "$label HTTP $status，预期 401/403"
+    fi
+  done
+else
+  printf '==> 管理认证（负向用例跳过）\n'
+  printf '  ! 未传 --check-negative-auth：每次失败尝试都计入 5 次上限，超过后该 IP 被封 30 分钟\n'
+fi
 
 printf '\n'
 if (( failures > 0 )); then
